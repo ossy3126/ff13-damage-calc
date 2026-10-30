@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FF13 ダメージ計算機</title>
+<style>
+:root{--bg:#f5f6fa;--card:#fff;--text:#1b2030;--muted:#667088;--line:#d9deea;--accent:#2f6fed;--out:#eef3ff;--on:#fff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12151d;--card:#1b2030;--text:#e8ecf6;--muted:#97a1b8;--line:#2e3650;--accent:#6c9bff;--out:#222b45;--on:#0b1020;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#12151d;--card:#1b2030;--text:#e8ecf6;--muted:#97a1b8;--line:#2e3650;--accent:#6c9bff;--out:#222b45;--on:#0b1020;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;line-height:1.55}
+main{max-width:760px;margin:0 auto;padding:14px}
+h1{font-size:1.25rem;margin:.3rem 0}h2{font-size:.95rem;margin:0 0 8px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}
+label{display:block;font-size:.76rem;color:var(--muted)}
+input,select{width:100%;box-sizing:border-box;margin-top:2px;padding:7px;font-size:.95rem;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text)}
+label.ck{display:flex;gap:6px;align-items:center;color:var(--text);font-size:.85rem}label.ck input{width:auto;margin:0}
+.tabs{display:flex;gap:6px;margin-bottom:10px}
+.tabs button{flex:1;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--text);font-size:.95rem;cursor:pointer}
+.tabs button.on{background:var(--accent);color:var(--on);border-color:var(--accent);font-weight:700}
+.res{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+.res div{background:var(--out);border-radius:10px;padding:8px 2px}.res b{display:block;font-size:1.25rem;color:var(--accent)}.res span{font-size:.72rem;color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:.78rem}td,th{padding:3px 6px;border-bottom:1px solid var(--line);text-align:right}td:first-child,th:first-child{text-align:left}
+.wrap{overflow-x:auto}.note{font-size:.76rem;color:var(--muted)}.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
+.chips button{padding:3px 9px;border:1px solid var(--line);border-radius:999px;background:var(--bg);color:var(--text);font-size:.76rem;cursor:pointer}
+.hide{display:none!important}
+</style></head><body><main>
+<h1>⚔️ FF13 ダメージ計算機</h1>
+<p class="note">用語は日本語版の名称です。<br>出典：ファイナルファンタジーXIII バトルアルティマニア<br>非公式のファンメイドツールです。ファイナルファンタジーは株式会社スクウェア・エニックスの商標または登録商標です。</p>
+<div class="tabs"><button id="tA" class="on">与ダメージ（味方→敵）</button><button id="tD">被ダメージ（敵→味方）</button></div>
+
+<div class="card"><h2>攻撃する技</h2><div class="grid">
+<label class="dm hide">敵<select id="en"></select></label>
+<label class="dm hide">敵の技<select id="es"></select></label>
+<label class="atk">プリセット<select id="pre"></select></label>
+<label id="chL" class="hide">使用キャラクター<select id="ch"><option value="o">ライトニング／スノウ／ファング</option><option value="s">サッズ</option><option value="v">ヴァニラ</option><option value="h">ホープ</option></select></label>
+<label class="ck atk"><input id="brk" type="checkbox">敵がブレイク中（ルーラーフィスト／ハイウィンドの倍率）</label>
+<label class="ck"><input id="xa" type="checkbox">技に属性がある（属性耐性を適用）</label>
+<label id="erL" class="hide">召喚獣のランク<select id="er"></select></label>
+<label id="glL" class="hide">ドライビングモードのフィニッシュレベル<select id="gl"><option>1</option><option>2</option><option>3</option></select></label>
+<label class="ck atk"><input id="ig" type="checkbox">固有技（物理/魔法耐性のみ無視。プロテス/シェル・デプロテ/デシェル・ブレイブ等は適用）</label>
+<label>攻撃タイプ<select id="type"><option value="p">物理攻撃</option><option value="m">魔法攻撃</option><option value="b">物理＆魔法（両方）</option></select></label>
+<label><span id="stL">攻撃側の物理攻撃力／魔法攻撃力</span><input id="stat" type="number" min="0" value="1700"></label>
+<label>技の倍率（ヒットごとに違う場合は + 区切り。属性のあるヒットは末尾に e）<input id="multi" type="text" inputmode="decimal" value="1.2"></label>
+<label>ダメージのばらつき幅(%)（ヒットごとに違う場合は 98*19+9 のように入力）<input id="vr" type="text" inputmode="decimal" value="4"></label>
+<label>ヒット数<input id="hits" type="number" min="1" step="1" value="1"></label>
+</div></div>
+
+<div class="card"><h2>攻撃側の補正</h2><div class="grid">
+<label class="ck atk"><input id="hv" type="checkbox">ハイボルテージ（+20%）</label><label class="atk">ピンチにパワフル<select id="pp"><option value="0">なし</option><option value="20">+20%</option><option value="40">改 +40%</option></select></label><label class="atk">仲間戦闘不能で強化<select id="ak"><option value="0">なし</option><option value="110">+110%／人</option><option value="130">改 +130%／人</option></select></label><label id="knL" class="hide">戦闘不能の仲間の人数<select id="kn"><option>1</option><option>2</option></select></label><label class="ck atk"><input id="gen" type="checkbox">元気だと威力UP（+20%）</label><label class="ck atk"><input id="kiki" type="checkbox">危機だと威力UP（+50%）</label>
+<label><span id="tbL">ブレイブ／フェイス系</span><select id="tb"><option value="1">なし</option><option value="1.4">ブレイブ／フェイス ×1.4</option><option value="1.8">ブレイダ／フェイダ ×1.8</option></select></label>
+<label id="chW" class="atk">チェーンボーナス(%)<input id="chain" type="number" min="0" max="999.9" step="0.1" value="100"><span class="chips" id="chips"></span></label>
+<label class="atk">自分のロール：アタッカー（ロールLv）<select id="c0"><option value="0">なし</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label><label class="atk">仲間のアタッカー①（ロールLv）<select id="c1"><option value="0">なし</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label><label class="atk">仲間のアタッカー②（ロールLv）<select id="c2"><option value="0">なし</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label><label class="atk">リベンジ系<select id="rv"><option value="0">なし</option><option value="m">リベンジモード（被弾1回ごと+10%）</option><option value="c">リベンジチャージ（2個目以降 +30%／個）</option></select></label><label id="rnL" class="hide">被弾回数／チャージのストック数<input id="rn" type="number" min="0" max="30" step="1" value="0"></label><label class="atk">属性ダメージ+○%（技の属性と一致時）<select id="ed"><option value="0">なし</option><option value="20">+20%</option><option value="30">+30%</option><option value="50">+50%</option></select></label><label class="atk">攻撃力ダウン装備<select id="dn"><option value="0">なし</option><option value="p50">物理大幅低下 −50%</option><option value="p30">物理低下 −30%</option><option value="m50">魔法大幅低下 −50%</option><option value="m30">魔法低下 −30%</option></select></label><div class="note atk" style="grid-column:1/-1">攻撃力アップ合計 +<span id="taV">0</span>%／ダメージ補正合計 +<span id="tcV">0</span>%</div>
+<label class="ck atk"><input id="ab1" type="checkbox">チェーンスターター（たたかう1.5／ルイン1.25）</label><label class="ck atk"><input id="ab2" type="checkbox">ゾーンクラッシュ（エリアブラスト2.0／ルインガ2.45）</label><label class="ck atk"><input id="ab3" type="checkbox">バックスタブ（たたかう2.0／ルイン1.75）</label><label class="atk">インパクトブレイク／ブレイクバースト（どちらか一方）<select id="ab4"><option value="0">なし</option><option value="i">インパクトブレイク（たたかう5.0）</option><option value="b">ブレイクバースト（たたかう5.0）</option></select></label>
+<label class="ck atk"><input id="lim" type="checkbox">ダメージ限界突破（上限999,999）</label><label class="ck atk"><input id="enh" type="checkbox">エン系一致（エンファイ等 ×1.3）</label>
+<label class="ck atk" id="dbW"><input id="db" type="checkbox">エンドストライク（残HP&lt;ダメージ×1.2で×1.5）</label>
+</div></div>
+
+<div class="card"><h2>防御側</h2><div class="grid">
+<div id="rA" class="grid" style="grid-column:1/-1">
+<label id="rtP">物理耐性<select id="rt"><option value="0">無効</option><option value="0.1">耐性</option><option value="0.5">半減</option><option value="1" selected>通常</option><option value="2">弱点</option></select></label>
+<label id="rtM">魔法耐性<select id="rt2"><option value="0">無効</option><option value="0.1">耐性</option><option value="0.5">半減</option><option value="1" selected>通常</option><option value="2">弱点</option></select></label>
+<label id="reL">属性耐性<select id="re"><option value="a">吸収</option><option value="0">無効</option><option value="0.1">耐性</option><option value="0.5">半減</option><option value="1" selected>通常</option><option value="2">弱点</option></select></label>
+<label id="wkL" class="ck"><input id="wk" type="checkbox">ウィーク状態（属性耐性を1段階低下）</label>
+</div>
+<div id="rD" class="grid hide" style="grid-column:1/-1">
+<label id="ptP">物理耐性(%)（装備）<input id="pt" type="number" min="0" max="100" step="1" value="0"></label><label id="ptM">魔法耐性(%)（装備）<input id="pt2" type="number" min="0" max="100" step="1" value="0"></label>
+<label id="peL">属性耐性(%)（装備）<input id="pe" type="number" min="0" max="100" step="1" value="0"></label>
+<label id="barL" class="ck"><input id="bar" type="checkbox">バファイ等（属性一致 ×0.5）</label>
+</div>
+<label class="ck" id="dpP"><input id="dep" type="checkbox">デプロテ状態（物理耐性+0.89）</label><label class="ck" id="dpM"><input id="des" type="checkbox">デシェル状態（魔法耐性+0.89）</label>
+<label id="proL">プロテス系<select id="pro"><option value="1">なし</option><option value="0.67">プロテス ×0.67</option><option value="0.5">プロテダ ×0.5</option></select></label><label id="shL">シェル系<select id="sh"><option value="1">なし</option><option value="0.67">シェル ×0.67</option><option value="0.5">シェルダ ×0.5</option></select></label>
+<label class="ck dm hide"><input id="dw" type="checkbox">ピンチバリア（×0.75）</label>
+<label id="rPL" class="hide">物理ダメージ軽減（連鎖）<select id="rP"><option value="0">なし</option><option value="5">−5（装備2個）</option><option value="10">−10（3個）</option><option value="20">−20（4個）</option><option value="30">−30（5個）</option></select></label><label id="rML" class="hide">魔法ダメージ軽減（連鎖）<select id="rM"><option value="0">なし</option><option value="5">−5（装備2個）</option><option value="10">−10（3個）</option><option value="20">−20（4個）</option><option value="30">−30（5個）</option></select></label><label class="dm hide">物理魔法軽減（連鎖）<select id="rB"><option value="0">なし</option><option value="5">−5（装備2個）</option><option value="10">−10（3個）</option><option value="15">−15（4個）</option><option value="20">−20（5個）</option></select></label>
+<label id="nPL" class="ck hide"><input id="nP" type="checkbox">物理攻撃&回復魔法無効（連鎖）</label><label id="nML" class="ck hide"><input id="nM" type="checkbox">魔法攻撃&回復魔法無効（連鎖）</label>
+<label class="dm hide">ピンチにシールド<select id="cs"><option value="1">なし</option><option value="0.85">×0.85</option><option value="0.7">改 ×0.70</option></select></label>
+<label class="dm hide">対象のロールがディフェンダー（ロールLv）<select id="s0"><option value="0">なし</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label><label class="dm hide">仲間のディフェンダー①（ロールLv）<select id="s1"><option value="0">なし</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label><label class="dm hide">仲間のディフェンダー②（ロールLv）<select id="s2"><option value="0">なし</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label><div class="note dm hide" style="grid-column:1/-1">ディフェンダーのロールボーナス合計：×<span id="senV">1</span>（戦闘不能の仲間は含めません）</div>
+<label class="dm hide">ディフェンダーの行動<select id="gm"><option value="n">なし</option><option value="r">ライズガード（20%〜）</option><option value="h">リジェネガード（20%）</option><option value="e">残像回避（20%）</option><option value="v">リベンジモード（10%）</option><option value="t">リベンジチャージ（10%）</option></select></label><label id="gxL" class="hide">ライズガードの上昇分(%)<br><span class="note">被弾ごとに+1〜3%（合計上限100%）</span><input id="gx" type="number" min="0" max="80" step="1" value="0"></label><label id="guL" class="hide">ガード系効果UP（装備）<select id="gu"><option value="0">なし</option><option value="8">+8%</option><option value="16">改 +16%</option></select></label>
+<label class="dm hide">ダメージを受けるキャラ<select id="tg"><option value="t">攻撃の対象（狙われた本人）</option><option value="c">巻き込まれた味方（範囲攻撃・全体攻撃）</option></select></label>
+<label class="dm hide">エリアバリア（発動者が狙われた攻撃に巻き込まれた味方だけ軽減。発動者本人・狙われた本人には効きません）<select id="fw"><option value="1">なし</option><option value="0.65">×0.65</option><option value="0.57">バリア系効果UP ×0.57</option><option value="0.49">バリア系効果UP改 ×0.49</option></select></label>
+<label class="ck"><input id="dz" type="checkbox">ダル（虚脱）状態（ダメージ×2）</label>
+
+<label>対象の現在HP（任意）<input id="hp" type="number" min="0" value=""></label>
+</div></div>
+
+<div class="card"><div class="res"><div><b id="mx">0</b><span>最大（合計）</span></div><div><b id="av">0</b><span>平均（合計）</span></div><div><b id="mn">0</b><span>最小（合計）</span></div></div>
+<p id="tot" style="margin:8px 0 0;font-size:.9rem"></p><p id="kill" class="note"></p>
+<div class="wrap"><table id="bd"></table></div></div>
+<p class="note">ばらつき幅は、最小値を「ばらつき下限」から別計算しています。被ダメージでは、攻撃側の補正はブレイブ／フェイス系のみ影響するため他は非表示です。物理＆魔法の技は、物理・魔法の耐性とプロテス系・シェル系が両方かかります（ブレイブ／フェイスは選んだ1つのみ適用）。吸収は物理/魔法耐性倍率を負値にする簡易処理です。</p>
+</main>
+<script>
+const $=i=>document.getElementById(i),n=i=>{const v=parseFloat($(i).value);return isNaN(v)?0:v},f=x=>Math.floor(x).toLocaleString("ja-JP");
+let mode="A";
+const EL=(a,m,v)=>({n:a,t:"m",m:[m],v,x:1});
+const PR=[{n:"（手動入力）"},
+{n:"たたかう",k:"a",t:"p",f:c=>c=="s"?{m:[.6],h:2,v:9}:(c=="v"||c=="h")?{m:[1.2],h:1,v:9}:{m:[1.2],h:1,v:4}},
+{n:"エリアブラスト",k:"b",t:"p",f:c=>c=="s"?{m:[.7],h:7,v:4}:{m:[1.8],h:1,v:4}},
+{n:"ルイン",k:"r",t:"m",m:[1],v:9},{n:"ルインガ",k:"g",t:"m",m:[2.2],v:9},
+EL("ファイア／ブリザド／サンダー／ウォータ／エアロ",1,9),
+EL("ファイラ／ブリザラ／サンダラ／ウォタラ／エアロラ",1.5,9),
+EL("ファイガ／ブリザガ／サンダガ／ウォタガ",2.2,9),
+{n:"エアロガ",t:"m",m:[.1,3.5],v:9,x:1},
+{n:"フレイムブロウ／フロストブロウ／スパークブロウ／ウェーブブロウ",t:"p",m:[1.2],v:4,x:1},
+{n:"手投げ弾",t:"p",m:[1.9],v:9,x:1},
+{n:"ルーラーフィスト",u:1,t:"p",m:[2,.5],b:[10,2],v:4},
+{n:"ハイウィンド",u:1,t:"p",m:[.5,.5,1,.5],b:[3,3,6,2],v:4},
+{n:"シーンドライブ",u:1,t:"p",m:[.3],h:11,v:4},{n:"デスペラード",u:1,t:"p",m:[.1],h:17,v:9},{n:"ラストリゾート",u:1,t:"m",m:[.5],h:8,v:9},{n:"デス",u:1,t:"m",m:[4],v:9}];
+const ST={ody:{r:3,pa:[141,183,225,301,407,649,2283,2675,2942,3237,3560,3917,4504,5405],ma:[93,121,149,199,316,430,1515,1775,1952,2148,2362,2599,2989,3586]},
+sti:{r:5,pa:[177,205,323,442,1557,1824,2006,2207,2427,2670,3071,3685],ma:[193,224,355,483,1702,1994,2193,2412,2653,2919,3357,4028]},
+nix:{r:5,pa:[188,219,347,472,1660,1995,2140,2354,2589,2848,3276,3931],ma:[150,175,277,377,1328,1556,1712,1883,2071,2278,2620,3144]},
+bry:{r:6,pa:[274,434,590,2076,2432,2675,2943,3237,3561,4095,4914],ma:[274,434,590,2076,2432,2675,2943,3237,3561,4095,4914]},
+bah:{r:8,pa:[708,2491,2918,3210,3531,3884,4273,4917,5896],ma:[601,2117,2480,2728,3001,3301,3632,4176,5011]},
+ale:{r:8,pa:[1056,3114,3648,4012,4414,4855,5341,6142,7371],ma:[1056,3114,3648,4014,4414,4855,5341,6142,7371]},
+hec:{r:8,pa:[1170,2698,3161,3477,3825,4208,4629,5323,6388],ma:[603,1390,1629,1791,1971,2168,2385,2743,3292]}};
+const X=(g,id,l,t,parts,v,o)=>{const m=[],el=[];parts.forEach(q=>{for(let i=0;i<q[1];i++){m.push(q[0]);el.push(q[2]?1:0)}});return Object.assign({n:g+"："+l,l,g,e:id,t,m,el,v},o)};
+const GN=(g,id,l,t,parts,o)=>X(g,id,"ドライビングモード "+l,t,parts,4,Object.assign({u:1},o));
+const NM=(g,id,l,t,parts)=>X(g,id,"ノーマルモード："+l,t,parts,9,{});
+const O="召喚獣：オーディン",S1="召喚獣：シヴァ",B1="召喚獣：ブリュンヒルデ",H1="召喚獣：バハムート",A1="召喚獣：アレキサンダー",E1="召喚獣：ヘカトンケイル";
+PR.push(
+NM(O,"ody","連閃","p",[[.25,4]]),NM(O,"ody","天臨","p",[[.33,3]]),NM(O,"ody","烈破／絶影","p",[[1,1]]),NM(O,"ody","サンダラ","m",[[1.5,1,1]]),NM(O,"ody","サンダガ","m",[[2.2,1,1]]),
+GN(O,"ody","上＋×：轟剣","p",[[2.33,1,0]]),GN(O,"ody","下＋×：雷光斬","p",[[.25,2,0],[.25,5,1]]),GN(O,"ody","左右＋×：真空破","p",[[.75,4,0],[1.5,3,0]]),GN(O,"ody","○：天鳴万雷","p",[[.66,3,1]]),
+GN(O,"ody","フィニッシュ：斬鉄剣","p",[[3,1,0]],{v:2,fin:[51,85,136],zan:1}),
+NM(S1,"sti","スティリア ブリザド","m",[[1,1,1]]),NM(S1,"sti","スティリア ブリザラ","m",[[1.5,1,1]]),NM(S1,"sti","スティリア ブリザガ","m",[[2.2,1,1]]),
+NM(S1,"nix","ニックス パワーホイール／フリッパーキック","p",[[1,1]]),NM(S1,"nix","ニックス ダンシングホイール","p",[[.25,4]]),NM(S1,"nix","ニックス ホイールスロー（最大5ヒット）","p",[[.25,5]]),NM(S1,"nix","ニックス トルネードレイヴ","p",[[.43,3]]),NM(S1,"nix","ニックス ブリザラ","m",[[1.5,1,1]]),
+GN(S1,"sti","上＋×：ウィリーラッシュ","p",[[1.25,3,0]]),GN(S1,"sti","下＋×：スプラッシュ","p",[[.5,5,1]]),GN(S1,"sti","左右＋×：アイシクルターン","p",[[.62,4,0]]),GN(S1,"sti","○：エアエッジ","p",[[.25,2,0],[1.25,1,1],[1.25,1,0]]),
+GN(S1,"sti","フィニッシュ：ダイヤモンドダスト","p",[[14,1,1]],{v:2,fin:[103,144,200]}),
+NM(B1,"bry","スラッシャー","p",[[1,1]]),NM(B1,"bry","ヴァルキリーサイズ（最大6ヒット）","p",[[.33,6]]),NM(B1,"bry","ガンショット","p",[[.33,3]]),NM(B1,"bry","ヒートショット／アイスショット／エレキショット／アクアショット","m",[[.85,1,1]]),NM(B1,"bry","ヒートバースト（武器）","p",[[.25,1]]),NM(B1,"bry","ヒートバースト／アイスバースト／エレキバースト／アクアバースト（爆発）","m",[[1.5,1,1]]),
+GN(B1,"bry","上＋×：チョッパースピン","p",[[.83,2,0]]),GN(B1,"bry","下＋×：カルトロップボム","p",[[2.5,1,1]]),GN(B1,"bry","左右＋×：スイーピングターン","p",[[.59,3,0]]),GN(B1,"bry","○：ホットロッド","p",[[.46,3,1]]),
+GN(B1,"bry","フィニッシュ：ムスペルフレイム","p",[[10.05,1,1]],{v:2,fin:[78,114,174]}),
+NM(H1,"bah","ドラゴンクロー","p",[[1,1]]),NM(H1,"bah","エアリアルレイヴ","p",[[.25,2],[.5,1]]),NM(H1,"bah","ヘビーストライク","p",[[1.5,1]]),NM(H1,"bah","インフェルノ","m",[[2,1,0]]),NM(H1,"bah","イグニス","m",[[1.5,1,0]]),
+GN(H1,"bah","上＋×：ハンティングダイブ","p",[[.53,2],[1.06,1]]),GN(H1,"bah","下＋×：スカイハイループ","p",[[1.06,2]]),GN(H1,"bah","左右＋×：デストロイブレス（最大5ヒット）","p",[[.53,5]]),GN(H1,"bah","○：スプレッドパルサー（約11ヒット）","p",[[.13,11]]),
+GN(H1,"bah","フィニッシュ：メガフレア","p",[[3,1]],{v:2,fin:[91,153,215]}),
+NM(A1,"ale","鉄砕掌／翔天掌／破壊の拳","p",[[1,1]]),NM(A1,"ale","金剛掌","p",[[.1,1],[2,1]]),NM(A1,"ale","爆轟の鉄拳","p",[[.25,1],[1.25,1]]),
+GN(A1,"ale","上＋×：鎧袖一触（耐性を無視しない）","p",[[.06,110]],{u:0}),GN(A1,"ale","下＋×：アースクエイク（近い敵）","p",[[.1,3]]),GN(A1,"ale","下＋×：アースクエイク（遠い敵）","p",[[.4,3]]),
+GN(A1,"ale","左右＋×：苛烈なる制裁（耐性を無視しない・最大18ヒット）","m",[[.05,18]],{u:0}),GN(A1,"ale","○：天罰","p",[[.41,1],[.83,2]]),
+GN(A1,"ale","フィニッシュ：聖なる審判","p",[[3,1]],{v:2,fin:[101,138,220],dj:1}),
+NM(E1,"hec","ラッシュ","p",[[.14,7]]),NM(E1,"hec","アサルトタックル","p",[[.5,1],[1,1]]),NM(E1,"hec","ハリケーンキック","p",[[1,1]]),NM(E1,"hec","インパルス（最大5ヒット）","p",[[.25,5]]),NM(E1,"hec","クエイク","m",[[2.2,1,1]]),NM(E1,"hec","カウンター（リベンジスタイル中）","p",[[1.5,1]]),
+GN(E1,"hec","上＋×：ガトリングキャノン（約32ヒット）","p",[[.03,32]]),GN(E1,"hec","下＋×：テトラミサイル","p",[[.17,4]]),GN(E1,"hec","左右＋×：ペネトレイトレイ","p",[[.4,4]]),GN(E1,"hec","○：バスターフォース","p",[[3.73,1]]),
+GN(E1,"hec","フィニッシュ：ガイアサルヴォー","p",[[15,1]],{v:2,fin:[54,108,162]}));
+const GR={};PR.forEach((p,k)=>{const op=new Option(p.l||p.n,k);if(p.g){if(!GR[p.g]){GR[p.g]=document.createElement("optgroup");GR[p.g].label=p.g;$("pre").appendChild(GR[p.g])}GR[p.g].appendChild(op)}else $("pre").add(op)});
+let MF=[];
+const czf=(a,f)=>{const o=[];for(let i=0;i<a.length;){let j=i;while(j<a.length&&a[j]==a[i]&&!!f[j]==!!f[i])j++;o.push(a[i]+(j-i>1?"*"+(j-i):"")+(f[i]?"e":""));i=j}return o.join("+")};
+const cz=a=>{const o=[];for(let i=0;i<a.length;){let j=i;while(j<a.length&&a[j]==a[i])j++;o.push(j-i>1?a[i]+"*"+(j-i):""+a[i]);i=j}return o.join("+")};
+
+const Z=(l,t,parts,v,sv,fx)=>{const m=[],el=[];parts.forEach(q=>{for(let i=0;i<q[1];i++){m.push(q[0]);el.push(q[2]?1:0)}});return{l,t,m,el,v,sv,fx}};
+const E=(g,n,pa,ma,k)=>({g,n,pa,ma,k});
+const ELM=(a,b,v)=>Z(a,"m",[[b,1,1]],v);
+const EN=[
+E("1章","重攻撃騎マナスヴィン（1回目/2回目）",15,15,[Z("通常攻撃（1回目だけ使う）","p",[[0.2,7],[0.5,1]],9),Z("プラズマビーム（両方使う）","p",[[1.2,1]],9),Z("波動砲（2回目だけ使う）","p",[[0.4,10]],19)]),
+E("1章","PSICOM治安猟兵",17,0,[Z("マシンガン","p",[[0.8,3]],89)]),
+E("1章","PSICOM治安兵",13,0,[Z("通常攻撃","p",[[1.0,1]],9)]),
+E("1章","PSICOM飛空偵察兵",20,0,[Z("マシンガン","p",[[1.0,3]],89),Z("炸裂ミサイル","p",[[0.45,6]],19)]),
+E("1章","ゲパルト烈爪",15,0,[Z("通常攻撃","p",[[1.2,1]],9)]),
+E("1章","PSICOM特殊戦衛士",20,19,[Z("通常攻撃","p",[[1.1,1]],19),Z("サンダー","m",[[1.0,1,1]],9),Z("サンダラ","m",[[1.5,1,1]],9)]),
+E("1章","ベヒーモス改",95,0,[Z("ひっかき","p",[[1.0,1]],9),Z("しゃくりあげ","p",[[2.5,1]],9)]),
+E("1章","機甲兵クリーガー",36,0,[Z("通常攻撃Ａ","p",[[1.0,1]],19),Z("通常攻撃Ｂ","p",[[0.7,1],[0.1,3]],9)]),
+E("2章","ツヴェルク探査型",13,0,[Z("体当たり","p",[[1.1,1]],9)]),
+E("2章","グール",64,38,[Z("通常攻撃","p",[[1.0,1]],29)]),
+E("2章","ファルシ=アニマ",57,30,[Z("通常攻撃","p",[[1.0,1]],9)]),
+E("2章","ファルシ右触肢",68,62,[Z("通常攻撃","p",[[1.0,1]],19),Z("共鳴魔法","m",[[1.0,1]],14)]),
+E("2章","ファルシ左触肢",68,62,[Z("通常攻撃","p",[[1.0,1]],4),Z("共鳴魔法","m",[[1.0,1]],14)]),
+E("3章","ガスト",47,80,[Z("通常攻撃","p",[[1.0,1]],4),Z("ファイア","m",[[1.0,1,1]],9)]),
+E("3章","重攻撃騎マナスヴィン（3回目）",44,0,[Z("プラズマバースト","p",[[1.0,3,1]],19),Z("波動砲","p",[[0.8,7]],19),Z("クリスタルレイン（対象）","p",[[5.0,2]],19),Z("クリスタルレイン（他の味方）","p",[[2.0,2]],19)]),
+E("3章","ベヒーモス剛",125,0,[Z("ひっかき","p",[[1.0,1]],19)]),
+E("3章","戦闘爆撃騎カルラ（1回目）",58,0,[Z("通常攻撃","p",[[1.0,1]],29),Z("ショックブレス","p",[[0.33,3,1]],4)]),
+E("3章","戦闘爆撃騎カルラ（2回目）通常形態",25,0,[Z("通常攻撃","p",[[1.0,1]],29)]),
+E("3章","戦闘爆撃騎カルラ（2回目）バリア形態",58,0,[Z("ショックブレス","p",[[0.33,3,1]],4),Z("ヘルブラスト","p",[[4.0,1,1]],4)]),
+E("3章","PSICOM特務猟兵",45,0,[Z("マシンガン","p",[[1.0,3]],74)]),
+E("4章","機甲兵ヴァッヘ",29,0,[Z("ドリルキック","p",[[1.0,1]],9),Z("スパークキック（ヴァッヘ1体）","p",[[2.0,1]],9),Z("スパークキック（ヴァッヘ2体）","p",[[6.0,1]],9),Z("スパークキック（ヴァッヘ3体）","p",[[12.0,1]],9)]),
+E("4章","バルバロイ",77,0,[Z("ラウンドスウィング","p",[[1.0,1]],6)]),
+E("4章","インキュバス",45,0,[Z("通常攻撃","p",[[1.0,1],[1.0,1],[1.3,1]],9)]),
+E("4章","サキュバス",96,120,[Z("通常攻撃","p",[[1.0,1]],49),Z("外道の舞","m",[[0.1,1]],0)]),
+E("4章","ドレッドノート（1回目）",120,73,[Z("通常攻撃","p",[[1.0,1]],4),Z("粉砕アーム","p",[[2.1,1]],14)]),
+E("4章","ドレッドノート（2回目）",120,73,[Z("焼却処分","m",[[0.85,2,1]],4),Z("粉砕鉄球","p",[[2.75,1,1]],9)]),
+E("4章","PSICOM特務兵",64,210,[Z("通常攻撃","p",[[1.0,1]],9),Z("ハードヒット","p",[[1.9,1]],14)]),
+E("4章","警備軍一般兵射手",40,64,[Z("マシンガン","p",[[1.0,4]],74)]),
+E("4章","機甲兵ウーラン",120,120,[Z("オートキャノン","p",[[0.15,6]],49),Z("通常攻撃","p",[[1.2,1]],9)]),
+E("4章","ボム",68,80,[Z("セルフアタック","m",[[0.7,1,1]],9),Z("自爆（残りHP 1248：満タン）","p",[[0.33,1]],0,1248,1),Z("自爆（残りHP 936：75%）","p",[[0.33,1]],0,936,1),Z("自爆（残りHP 624：50%）","p",[[0.33,1]],0,624,1),Z("自爆（残りHP 312：25%）","p",[[0.33,1]],0,312,1)]),
+E("5章","シルバリオ",89,35,[Z("通常攻撃","p",[[1.0,1]],2),Z("毒の息","p",[[1.0,1]],2,35),Z("ポイズンハンター","p",[[0.6,1],[1.2,1]],2)]),
+E("5章","クロウラー",65,0,[Z("通常攻撃","p",[[1.0,1]],2)]),
+E("5章","ベヒーモス",158,0,[Z("ひっかき","p",[[1.0,1,1]],9),Z("しゃくりあげ","p",[[3.5,1,1]],0)]),
+E("5章","快速機ミーラン",116,0,[Z("マシンガン","p",[[0.25,4]],2)]),
+E("5章","警備軍巡視兵射手",84,58,[Z("マシンガン","p",[[0.25,4]],9)]),
+E("5章","試作騎ユイジンシャン",253,253,[Z("通常攻撃","p",[[0.4,1],[0.6,1]],9),Z("魔導弾","m",[[1.0,1]],9),Z("フラワースクリュー","p",[[0.4,4]],9),Z("ヘッドアッパー","p",[[0.6,1]],9),Z("ダンクスマッシュ（拳）","p",[[1.2,1]],9),Z("ダンクスマッシュ（衝撃波）","p",[[0.2,1]],9)]),
+E("6章","エンキ",133,171,[Z("通常攻撃","p",[[1.0,1]],9),Z("ふみつぶす","p",[[1.3,1]],4),Z("水弾","m",[[1.0,1,1]],9),Z("憤怒の波","m",[[1.05,1,1]],9)]),
+E("6章","エンリル",120,185,[Z("通常攻撃","p",[[1.0,1]],9),Z("ふみつぶす","p",[[1.3,1]],4),Z("雷球","m",[[1.0,1,1]],9),Z("激怒の嵐","m",[[1.05,1,1]],9)]),
+E("7章","侵攻制圧騎ウシュムガル1回目",171,0,[Z("フレイムナパーム","p",[[0.15,5]],9),Z("テイルクラッシュ","p",[[1.0,2]],9)]),
+E("7章","侵攻制圧騎ウシュムガル2回目",171,0,[Z("ビームレイン","p",[[0.5,2]],9)]),
+E("7章","侵攻制圧騎ウシュムガル3回目",171,0,[Z("ビームレイン","p",[[0.5,2]],9),Z("ビームレイン（残りHP40%以下）","p",[[0.33,4]],9),Z("ピンポイントレイ","p",[[0.4,6]],9),Z("ピンポイントレイ（残りHP40%以下）","p",[[0.3,12]],9),Z("フォトンブラスター","p",[[0.3,10]],9)]),
+E("7章","PSICOM駆逐兵",67,60,[Z("通常攻撃A","p",[[0.5,2]],4),Z("通常攻撃B","p",[[0.5,3]],4),Z("ハードヒット","p",[[2.5,1]],4)]),
+E("7章","PSICOM飛空狙撃兵",78,0,[Z("通常攻撃","p",[[1.0,1]],9),Z("多連装ミサイル","p",[[0.5,6]],19)]),
+E("7章","PSICOM駆逐猟兵",92,75,[Z("通常攻撃","p",[[1.0,1]],74),Z("カーズ=ギア","m",[[0.3,1]],9)]),
+E("7章","PSICOM特化駆逐兵",353,0,[Z("バズーカ","p",[[1.0,1]],9)]),
+E("7章","飛空戦車グライフ",218,0,[Z("ワイヤーガン","p",[[0.6,2]],9),Z("主砲（開始時）","p",[[1.5,1]],9),Z("主砲（主砲出現後）","p",[[1.0,1]],9)]),
+E("7章","グライフ右舷／左舷／右機関砲／左機関砲",218,0,[Z("ミサイル","p",[[0.35,6]],9),Z("機関砲","p",[[0.09,10]],9),Z("機関砲（ターゲットなし）","p",[[0.09,3]],9)]),
+E("8章","ツヴェルク市街型",145,54,[Z("体当たり","p",[[1.0,1]],9),Z("サンダラ","m",[[1.5,1,1]],9)]),
+E("8章","突撃砲レーヴェ",200,119,[Z("鎮圧ガス","p",[[1.0,1]],2),Z("フォースビーム","p",[[0.25,4,1]],9),Z("レールキャノン","p",[[3.4,1]],4),Z("トライレーザー","p",[[1.2,1,1]],9)]),
+E("8章","フリュンヒルデ",116,128,[Z("ガンショット","p",[[0.33,6]],9),Z("スラッシャー","p",[[1.0,2]],9),Z("ヴァルキリーサイズ","p",[[0.33,3]],9),Z("ヒートショット","m",[[0.85,1,1]],9),Z("ヒートバースト","m",[[1.5,1,1]],9)]),
+E("9章","PSICOM強襲兵",57,95,[Z("通常攻撃","p",[[1.0,1]],9),Z("ハードヒット","p",[[2.7,1]],4),Z("フォグ=ギア","m",[[0.3,1]],9),Z("ペイン=ギア","m",[[0.3,1]],9)]),
+E("9章","PSICOM強襲猟兵",153,210,[Z("通常攻撃","p",[[1.0,1]],49)]),
+E("9章","プリン衛生兵",100,750,[Z("通常攻撃","p",[[1.0,2]],9)]),
+E("9章","プリン電磁兵",147,391,[Z("通常攻撃","p",[[0.5,2]],9),Z("制圧スパーク","m",[[1.0,1,1]],4)]),
+E("9章","ヴェスペ陣風",42,88,[Z("刺突","p",[[1.0,1]],4),Z("エアロガ","m",[[0.1,1,1],[3.5,1,1]],9)]),
+E("9章","シルトバット陽炎（通常時）",176,0,[Z("スケイルフォトン","b",[[3.1,1]],9)]),
+E("9章","シルトバット陽炎（甲殻消失時）",70,0,[Z("かみつく","p",[[1.0,1]],4)]),
+E("9章","PSICOM機動コマンド",59,20,[Z("通常攻撃A（ブレイブ状態の時に使う）","p",[[1.0,2],[2.0,1]],9),Z("通常攻撃B（ブレイブ状態でない時に使う）","p",[[1.0,1]],9)]),
+E("9章","PSICOM特化強襲兵",400,0,[Z("バズーカ","p",[[1.0,1]],9)]),
+E("9章","PSICOM戦術導士",135,135,[Z("通常攻撃","p",[[1.0,1]],2),Z("デプロテ=ギア","m",[[0.3,1]],9),Z("デシェル=ギア","m",[[0.3,1]],9),Z("デスペル=ギア","m",[[0.3,1]],9),Z("ルイン","m",[[1.0,1]],9),Z("ルインガ","m",[[2.2,1]],9)]),
+E("9章","襲撃騎カラヴィンカ（1回目）",185,0,[Z("通常攻撃","p",[[1,1]],9),Z("サンダーブレス","p",[[.6,3,1]],9)]),
+E("9章","襲撃騎カラヴィンカ（2回目）",185,0,[Z("通常攻撃","p",[[1,1]],9),Z("サンダーブレス","p",[[.6,3,1]],9),Z("ヘルブラスト","p",[[4.6,1,1]],9)]),
+E("9章","バルトアンデルス（1回目）本体",73,100,[Z("滅びの洗礼","m",[[1,3]],9),Z("ルインガ","m",[[2.2,1]],9),Z("タナトスの嘲笑","p",[[1,7]],9),Z("デストルドー（3段階）","m",[[1.7,20]],9),Z("デストルドー（2段階）","m",[[1.7,12]],9),Z("デストルドー（1段階）","m",[[1.7,6]],9)]),
+E("9章","ファルシ右外装",0,100,[ELM("ファイア",1,9),ELM("ファイラ",1.5,9),ELM("ファイガ",2.2,9)]),
+E("9章","ファルシ右副次装",0,100,[ELM("サンダー",1,9),ELM("サンダラ",1.5,9),ELM("サンダガ",2.2,9)]),
+E("9章","ファルシ左外装",0,100,[ELM("ウォータ",1,9),ELM("ウォタラ",1.5,9),ELM("ウォタガ",2.2,9)]),
+E("9章","ファルシ左副次装",0,100,[ELM("ブリザド",1,9),ELM("ブリザラ",1.5,9),ELM("ブリザガ",2.2,9)]),
+E("10章","シド・レインズ",135,172,[Z("通常攻撃A","p",[[1,2],[.5,2],[2,1]],9),Z("ルイン","m",[[1,1]],9),Z("ルインガ","m",[[2.2,1]],9),Z("通常攻撃B（メタモルフォーゼ後）","p",[[1.5,1],[1,2],[3,1]],9),Z("バイオガ／デプロガ／デシェガ／ダルガ（メタモルフォーゼ後）","m",[[.3,1]],9),Z("セラフィックレイ（メタモルフォーゼ後）","m",[[5,1]],19)]),
+E("10章","イェニチェリ",286,148,[Z("ラウンドスウィング","p",[[1.0,1]],9),Z("トラクター","p",[[1.0,1]],29,148)]),
+E("10章","ヒューズ",198,198,[Z("セルフアタック","m",[[1.0,1,1]],9),Z("自爆（残りHP 5040：満タン）","p",[[0.25,1]],4,5040,1),Z("自爆（残りHP 3780：75%）","p",[[0.25,1]],4,3780,1),Z("自爆（残りHP 2520：50%）","p",[[0.25,1]],4,2520,1),Z("自爆（残りHP 1260：25%）","p",[[0.25,1]],4,1260,1)]),
+E("10章","バハムート",310,310,[Z("ドラゴンクロー","p",[[0.5,2]],9),Z("インフェルノ","m",[[2.0,1]],9),Z("エアリアルレイヴ","p",[[0.25,2],[0.5,1]],9),Z("ヘビーストライク","p",[[1.5,1]],9),Z("イグニス","m",[[1.5,1]],9)]),
+E("11章","アレキサンダー",850,850,[Z("鉄砕掌","p",[[1.0,2]],9),Z("翔天掌","p",[[0.75,1]],9),Z("金剛掌","p",[[1.25,1]],9),Z("破壊の拳（狙った相手）","p",[[1.0,1]],9),Z("破壊の拳（それ以外）","p",[[0.5,1]],9),Z("爆轟の鉄拳","p",[[0.25,1],[1.25,1]],9)]),
+E("11章","ラスティプリン",820,0,[Z("通常攻撃","p",[[0.5,2]],4)]),
+E("11章","ヘカトンケイル",586,373,[Z("アサルトタックル","p",[[1.0,1]],9),Z("ハリケーンキック","p",[[1.0,1]],9),Z("インパルス","p",[[0.25,4]],9),Z("ラッシュ","p",[[0.14,7]],9),Z("カウンター","p",[[1.5,1]],9),Z("クエイク","m",[[2.2,1,1]],9)]),
+E("11章","ギガゼラチン",634,597,[Z("通常攻撃","p",[[0.7,2]],9)]),
+E("11章","スパルタン",898,465,[Z("通常攻撃","p",[[1.0,1]],4)]),
+E("11章","グランガッチ",783,2088,[Z("かみつく","p",[[1.0,1]],9)]),
+E("11章","ムシュフシュ",475,163,[Z("スティングA","p",[[1.0,1]],9),Z("スティングB","p",[[1.2,1]],9),Z("スピンアタック","p",[[0.75,1]],9)]),
+E("11章","ヴェーターラ",313,365,[Z("ファイア","m",[[1.0,1,1]],9),Z("ブリザド","m",[[1.0,1,1]],9),Z("サンダー","m",[[1.0,1,1]],9),Z("ウォータ","m",[[1.0,1,1]],9),Z("ファイラ","m",[[1.5,1,1]],9),Z("ブリザラ","m",[[1.5,1,1]],9),Z("サンダラ","m",[[1.5,1,1]],9),Z("ウォタラ","m",[[1.5,1,1]],9),Z("スロウガ／ペインガ／バイオガ／フォーガ／デプロガ／デシェガ","m",[[0.3,1]],9)]),
+E("11章","ペナンガラン",339,385,[Z("通常攻撃","p",[[1.0,1]],9),Z("生者感知","p",[[0.3,1]],4),Z("エアロガ","m",[[0.1,1,1],[3.5,1,1]],9)]),
+E("11章","チョンチョン",131,261,[Z("通常攻撃","p",[[1.0,1]],9),Z("生者感知","p",[[0.3,1]],4)]),
+E("11章","ファルシ＝ダハーカ（初期状態）",743,761,[Z("通常攻撃","p",[[1,1]],9),Z("不浄の言霊","m",[[2.5,1]],9),Z("焦熱の刧雷","m",[[3.2,1,1]],9),Z("極寒の怒涛","m",[[3.2,1,1]],9),Z("疫病の氾濫","m",[[.8,1]],19),ELM("ファイア／ブリザド／サンダー／ウォータ",1,9),ELM("ファイラ／ブリザラ／サンダラ／ウォタラ",1.5,9),ELM("ファイガ／ブリザガ／サンダガ／ウォタガ",2.2,9)]),
+E("11章","バルトアンデルス（2回目）本体",413,660,[Z("レーザー（本体・初期状態）","m",[[.75,1]],9),Z("タナトスの哄笑（顔露出後）","m",[[.15,16]],4),Z("バイオガ／ダルガ／カーズガ（顔露出後）","m",[[.3,1]],9)]),
+E("11章","バルトアンデルス（2回目）パーツ",275,275,[Z("レーザー（物理）","p",[[1,1]],9),Z("レーザー（魔法）","m",[[1,1]],9)]),
+E("12章","機甲兵キュラシェーア",852,852,[Z("通常攻撃","p",[[1.2,1]],9),Z("オートキャノン","p",[[0.15,4]],2),Z("ガイデッドビーム","p",[[1.5,3,1]],19)]),
+E("12章","聖府親衛兵",355,355,[Z("通常攻撃","p",[[1.0,1]],4),Z("ハードヒット","p",[[1.5,1]],4)]),
+E("12章","キングベヒーモス",943,825,[Z("ひっかき","p",[[1.0,1]],9),Z("カチあげ","p",[[2.0,1]],4)]),
+E("12章","プラウド・クラッド（1回目）本体",420,0,[Z("通常攻撃","p",[[.1,12]],9)]),
+E("12章","プラウド・クラッド（1回目）ビット",263,263,[Z("レーザー","p",[[1,1]],0)]),
+E("12章","アダマンケリス",1292,861,[Z("ストンピング","p",[[1.0,1,1]],14),Z("クエイク","m",[[2.2,1,1]],9)]),
+E("12章","プラウド・クラッド（2回目）地上形態",1105,0,[Z("通常攻撃A","p",[[1,1]],9),Z("ミューオンバスター","p",[[.2,5]],9),Z("防空モード移行","p",[[1,1]],9),Z("ナイトメアストーム（リミッター解除後に使用）","p",[[.2,19],[1.5,1]],"98*19+9")]),
+E("12章","プラウド・クラッド（2回目）飛行形態",477,0,[Z("通常攻撃B","p",[[.1,12]],9),Z("デストロイモード発動","p",[[1,1]],9)]),
+E("12章","プラウド・クラッド（2回目）ビット",288,288,[Z("レーザー","p",[[1,1]],0),Z("レーザー（リミッター解除後）","p",[[1.4,1]],0)]),
+E("13章","ヴラディスラウス",2735,2735,[Z("無為の刀","p",[[1,1]],9),Z("生者必滅（物理＆魔法・物理攻撃力で計算）","b",[[2,1]],19),Z("風の追加攻撃（生者必滅2～3回目：風1ヒット）","m",[[.1,1,1]],9),Z("風の追加攻撃（生者必滅4回目以降：風2ヒット）","m",[[.1,2,1]],9)]),
+E("13章","決戦騎ティアマット（飛行形態）",700,0,[Z("アイスグレネード","p",[[.15,5,1]],9),Z("テイルクラッシュ","p",[[.8,1]],9),Z("強襲降下","p",[[1,1]],9)]),
+E("13章","決戦騎ティアマット（地上形態）",700,0,[Z("ピンポイントレイ","p",[[.5,6]],9),Z("ビームレイン","p",[[.4,2]],9),Z("フォトンブラスター","p",[[.4,10]],9),Z("攻勢機動","p",[[1,1]],9)]),
+E("13章","バルトアンデルス（3回目）本体",840,840,[Z("アルテマ","m",[[0.1,1],[5.0,1]],98)]),
+E("13章","バルトアンデルス（3回目）パーツ",525,525,[Z("レーザー（物理）","p",[[1.5,3]],29),Z("レーザー（魔法）","m",[[1.5,3]],29)]),
+E("13章","オーファン第1形態（陽モード）",1367,5470,[Z("鉄槌","p",[[1,1]],14),Z("レクイエム","p",[[2.7,1]],49),Z("殺戮のエディプス（物理攻撃力で計算）","m",[[.5,1]],0,1367)]),
+E("13章","オーファン第1形態（陰モード）",1367,1163,[Z("搾取のエレクトラ","m",[[1,1]],14),Z("黒ルイン","m",[[1,1]],9)]),
+E("13章","オーファン第1形態（陰陽モード）",1367,1367,[Z("殺戮のエディプス（物理攻撃力で計算）","m",[[.5,1]],0,1367),Z("搾取のエレクトラ","m",[[1,1]],14),Z("ディエス・イレ","b",[[3.5,1]],14),Z("黒ルイン","m",[[1,1]],9)]),
+E("13章","オーファン第2形態",1215,1215,[Z("制裁（通常時）","p",[[1,1]],14),Z("なげきの慟哭（通常時）","m",[[.5,1]],9),Z("万象の妖光（通常時・物理＆魔法・魔法攻撃力で計算）","b",[[4,1]],69),Z("黒ルイン（姿変化中）","m",[[1,1]],9,683)])
+];
+const EG={};$("en").add(new Option("（手動入力）",-1));
+EN.forEach((e,i)=>{const op=new Option(e.n,i);if(!EG[e.g]){EG[e.g]=document.createElement("optgroup");EG[e.g].label=e.g;$("en").appendChild(EG[e.g])}EG[e.g].appendChild(op)});
+function applyEnemy(){const e=EN[+$("en").value];if(!e)return;const k=e.k[+$("es").value];if(!k)return;
+ $("type").value=k.t;$("stat").value=k.sv!=null?k.sv:(k.t=="m"?e.ma:e.pa);$("multi").value=czf(k.m,k.el);$("vr").value=k.v;$("hits").value=k.m.length;$("xa").checked=false;FXon=!!k.fx}
+let FXon=false;["type","stat","multi","vr","hits"].forEach(i=>$(i).addEventListener("input",()=>{FXon=false}));
+$("en").addEventListener("input",()=>{const e=EN[+$("en").value];$("es").innerHTML="";if(e)e.k.forEach((k,j)=>$("es").add(new Option(k.l,j)));applyEnemy()});
+$("es").addEventListener("input",applyEnemy);
+let wasSm=false,limPrev=false;
+function setEid(p){const s=ST[p.e],er=$("er");if(er.dataset.id!=p.e){er.innerHTML="";for(let r=16;r>=s.r;r--)er.add(new Option(r,r));er.dataset.id=p.e}$("stat").value=(p.t=="m"?s.ma:s.pa)[+er.value-s.r]}
+function chainEff(){return Math.min(999.9,n("chain")+finInc())}
+function finInc(){const p=PR[$("pre").value];return mode=="A"&&p.fin?p.fin[+$("gl").value-1]:0}
+const AB={a:[["ab1",1.5],["ab3",2],["ab4",5]],r:[["ab1",1.25],["ab3",1.75]],b:[["ab2",2]],g:[["ab2",2.45]]};
+function applyPreset(){if(!["たたかう","エリアブラスト"].includes(PR[$("pre").value].n))$("ch").value="o";const sz=$("ch").value=="s";$("ab2").disabled=sz;if(sz)$("ab2").checked=false;const p=PR[$("pre").value];const sm=!!p.e;if(sm&&!wasSm)limPrev=$("lim").checked;if(!sm&&wasSm)$("lim").checked=limPrev;if(sm)$("lim").checked=true;$("lim").disabled=sm;wasSm=sm;if(!p.t)return;$("ig").checked=!!p.u;$("xa").checked=!!p.x;if(p.e)setEid(p);const c=$("ch").value,d=p.f?p.f(c):{m:p.m,h:p.h||1,v:p.v};let m=($("brk").checked&&p.b)?p.b:d.m;const h=m.length>1?m.length:d.h;
+ if(p.k){const ab=(AB[p.k]||[]).filter(x=>x[0]=="ab4"?$("ab4").value!="0":$(x[0]).checked).map(x=>x[1]);if(ab.length)m=[+(Math.max(...ab)/h).toFixed(4)]}
+ $("type").value=p.t;$("multi").value=p.e?czf(m,p.el):cz(m);$("vr").value=d.v;$("hits").value=h}
+["pre","ch","brk","ab1","ab2","ab3","ab4","er"].forEach(id=>$(id).addEventListener("input",applyPreset));
+[100,200,300,500,999.9].forEach(v=>{const b=document.createElement("button");b.type="button";b.textContent=v+"%";b.onclick=()=>{$("chain").value=v;calc()};$("chips").appendChild(b)});
+function setMode(m){mode=m;if(m=="D")$("xa").checked=false;else{const q=PR[$("pre").value];if(q.t)$("xa").checked=!!q.x}const ob=$("type").querySelector('option[value="b"]');ob.hidden=m=="A";ob.disabled=m=="A";if(m=="A"&&$("type").value=="b")$("type").value="p";$("tA").classList.toggle("on",m=="A");$("tD").classList.toggle("on",m=="D");
+ $("rA").classList.toggle("hide",m=="D");$("rD").classList.toggle("hide",m=="A");document.querySelectorAll(".atk").forEach(e=>e.classList.toggle("hide",m=="D"));document.querySelectorAll(".dm").forEach(e=>e.classList.toggle("hide",m=="A"));
+ $("stL").textContent=m=="A"?"味方の物理攻撃力／魔法攻撃力":"敵の物理攻撃力／魔法攻撃力";calc()}
+$("tA").onclick=()=>setMode("A");$("tD").onclick=()=>setMode("D");
+function gdv(){if(mode!="D")return 0;const m=$("gm").value,B={n:0,r:20,h:20,e:20,v:10,t:10};let g=B[m];if(m=="r")g=Math.min(100,g+n("gx"));if(m=="r"||m=="h")g+=n("gu");return g}
+const cl=i=>Math.min(100,Math.max(0,n(i)));
+const CS=[0,100,110,120,130,150],CP=[0,5,5,10,10,15];
+function TA(){if(mode!="A")return 0;let a=0;if($("hv").checked)a+=20;a+=+$("pp").value;a+=(+$("ak").value)*(+$("kn").value);if($("gen").checked)a+=20;if($("kiki").checked)a+=50;return a}
+function TC(){if(mode!="A")return 0;const t=$("type").value,rv=$("rv").value;let c=CS[+$("c0").value]+CP[+$("c1").value]+CP[+$("c2").value];
+if(rv=="m")c+=Math.min(30,n("rn"))*10;else if(rv=="c")c+=Math.min(5,Math.max(0,n("rn")-1))*30;
+if(rv!="0")c=Math.min(300,c);c+=+$("ed").value;const k=$("dn").value;if(k!="0"&&((k[0]=="p"&&t!="m")||(k[0]=="m"&&t!="p")))c-=+k.slice(1);return c}
+const TS=[0,.1,.5,1,2],ES=["a","0","0.1","0.5","1","2"];
+const SF=[1,.65,.63,.6,.56,.5],PF=[1,.92,.92,.89,.89,.86];
+function senv(){return mode=="D"?SF[+$("s0").value]*PF[+$("s1").value]*PF[+$("s2").value]:1}
+function VR(i){const a=[];$("vr").value.replace(/＋/g,"+").split("+").forEach(tk=>{const q=tk.trim().match(/^([\d.]+)(?:[*×x](\d+))?$/);if(!q)return;for(let j=0;j<(q[2]?+q[2]:1);j++)a.push(parseFloat(q[1]))});if(!a.length)return 0;return(a.length==1?a[0]:a[Math.min(i,a.length-1)])/100}
+function run(low,mm,el,pen,ix){
+ if(FXon&&mode=="D"){const d=Math.floor(n("stat")*mm*(low?1-VR(ix||0):1));return{d,S:[["固定ダメージ（軽減なし）= 値×倍率"+(low?"×(1−ばらつき)":""),d]]}}
+ const S=[],t=$("type").value,vr=VR(ix||0);let d=n("stat")*mm;S.push(["基礎 = 攻撃力×倍率",d]);
+ d*=1+TA()/100;S.push(["1 攻撃力アップ",d]);{let v=parseFloat($("tb").value);if(mode=="A"&&$("ig").checked&&v==.1)v=1;d*=v}S.push(["2 ブレイブ/フェイス",d]);
+ if(low){d*=1-vr;S.push(["3 ばらつき下限",d])}
+ if(mode=="A"){d*=chainEff()/100;S.push(["4 チェーンボーナス"+(finInc()?"（フィニッシュ+"+finInc()+"・上限999.9%）":""),d])}
+ d*=Math.max(0,1+TC()/100);S.push(["5 ダメージ補正",d]);
+ if(mode=="A"&&$("enh").checked){d*=1.3;S.push(["6 エン系 ×1.3",d])}
+ const hp=n("hp");if(mode=="A"&&$("db").checked&&hp>0&&hp<1.2*d){d*=1.5;S.push(["7 エンドストライク ×1.5",d])}
+ let R;const uP=t!="m",uM=t!="p";
+ if(mode=="A"){let e=$("re").value;const ig=$("ig").checked;const w=$("wk").checked;if(w)e=ES[Math.min(5,ES.indexOf(e)+1)];if(!el)e="1";else if(pen&&["a","0","0.1","0.5"].includes(e))e="1";const T=v=>parseFloat(v);let tm=1;if(uP)tm*=(ig?1:T($("rt").value))+($("dep").checked?.89:0);if(uM)tm*=(ig?1:T($("rt2").value))+($("des").checked?.89:0);R=e=="a"?-tm:tm*parseFloat(e);if(PR[$("pre").value].dj)R=(T($("rt").value)==2||T($("rt2").value)==2?2:1)*(e=="2"?2:1)*($("dep").checked||$("des").checked?1.89:1)}
+ else{let tm=1;if(uP)tm*=1-cl("pt")/100+($("dep").checked?.89:0);if(uM)tm*=1-cl("pt2")/100+($("des").checked?.89:0);let em=el?(1-cl("pe")/100)*($("bar").checked?.5:1):1;R=tm*em}
+ d*=R;S.push(["8 耐性 ×"+R.toFixed(3),d]);
+ const DJ=mode=="A"&&PR[$("pre").value].dj;const D=(uP&&!DJ?parseFloat($("pro").value):1)*(uM&&!DJ?parseFloat($("sh").value):1)*(mode=="D"&&$("dw").checked?.75:1)*(mode=="D"?parseFloat($("cs").value):1);d*=D;S.push(["9 状態軽減 ×"+D.toFixed(3),d]);
+ const E=Math.max(0,1-((1-senv())+gdv()/100));d*=E;if(mode=="D")S.push(["10 ガード/ロール軽減 ×"+E.toFixed(3),d]);
+ const fwOff=$("tg").value=="t";d*=mode=="D"&&!fwOff?parseFloat($("fw").value):1;if(mode=="D")S.push(["11 エリアバリア"+(fwOff&&$("fw").value!="1"?"（狙われた本人には効かない）":""),d]);
+ const CAP=mode=="A"&&$("lim").checked?999999:99999;if(!(mode=="A"&&PR[$("pre").value].dj)&&d>CAP){d=CAP;S.push(["12 上限 "+CAP.toLocaleString("ja-JP"),d])}
+ if($("dz").checked){d*=2;S.push(["13 ダル ×2",d])}
+ if(mode=="D"&&((uP&&$("nP").checked)||(uM&&$("nM").checked))){d=0;S.push(["15 連鎖無効（1ヒットごと）",0])}
+ if(mode=="D"&&d>0){let r=0;if(uP)r+=+$("rP").value;if(uM)r+=+$("rM").value;if(uP||uM)r+=+$("rB").value;if(r>0){d=Math.max(0,d-r);S.push(["15 連鎖軽減 −"+r+"（1ヒットごと）",d])}}
+ return{d:Math.max(0,d),S}}
+function vis(){const pp0=PR[$("pre").value];mults();const anyEl=MF.some(Boolean)||$("xa").checked||(mode=="A"&&$("enh").checked);["reL","wkL","peL","barL"].forEach(id=>$(id).classList.toggle("hide",!anyEl));$("xa").disabled=false;$("erL").classList.toggle("hide",mode!="A"||!pp0.e);$("glL").classList.toggle("hide",mode!="A"||!pp0.fin);$("chL").classList.toggle("hide",mode!="A"||!["たたかう","エリアブラスト"].includes(PR[$("pre").value].n));const T0=$("type").value,D0=mode=="D";const tbT={p:["ブレイブ系","ブレイブ ×1.4","ブレイダ ×1.8","減力 ×0.1"],m:["フェイス系","フェイス ×1.4","フェイダ ×1.8","減魔 ×0.1"],b:["ブレイブ／フェイス系","ブレイブ／フェイス ×1.4","ブレイダ／フェイダ ×1.8","減力／減魔 ×0.1"]}[T0];$("tbL").textContent=tbT[0];[1,2].forEach(i=>$("tb").options[i].textContent=tbT[i]);const o2=$("tb").options[2];o2.hidden=o2.disabled=D0;if(D0&&$("tb").value=="1.8")$("tb").value="1";$("stL").textContent=(D0?"敵の":"味方の")+{p:"物理攻撃力",m:"魔法攻撃力",b:"物理攻撃力／魔法攻撃力"}[T0];const dn=$("dn");[...dn.options].forEach(o=>{const h=(o.value[0]=="p"&&T0=="m")||(o.value[0]=="m"&&T0=="p");o.hidden=h;o.disabled=h});if(dn.selectedOptions[0].disabled)dn.value="0";$("rPL").classList.toggle("hide",!D0||T0=="m");$("nPL").classList.toggle("hide",!D0||T0=="m");$("rML").classList.toggle("hide",!D0||T0=="p");$("nML").classList.toggle("hide",!D0||T0=="p");$("knL").classList.toggle("hide",mode!="A"||$("ak").value=="0");$("rnL").classList.toggle("hide",mode!="A"||$("rv").value=="0");const m=$("gm").value;$("gxL").classList.toggle("hide",mode!="D"||m!="r");$("guL").classList.toggle("hide",mode!="D"||(m!="r"&&m!="h"));const t=(mode=="A"&&PR[$("pre").value].dj)?"b":$("type").value;[["rtP","ptP","dpP","proL"],["rtM","ptM","dpM","shL"]].forEach((g,i)=>g.forEach(id=>$(id).classList.toggle("hide",i==0?t=="m":t=="p")))}
+function mults(){const ml=[];MF=[];$("multi").value.replace(/＋/g,"+").split("+").forEach(tk=>{const q=tk.trim().match(/^([\d.]+)(?:[*×x](\d+))?\s*(e|E|属)?$/);if(!q)return;const v=parseFloat(q[1]),k=q[2]?Math.max(1,parseInt(q[2])||1):1,fl=!!q[3];for(let i=0;i<k;i++){ml.push(v);MF.push(fl)}});if(ml.length>1){$("hits").value=ml.length;return ml}const h=Math.min(50,Math.max(1,Math.floor(n("hits"))));const f0=MF[0]||false;MF=Array(h).fill(f0);return Array(h).fill(ml[0]||0)}
+function calc(){vis();$("taV").textContent=TA();$("tcV").textContent=TC();$("senV").textContent=senv().toFixed(3);
+ $("rt").disabled=false;
+ const L=mults(),pp=PR[$("pre").value];const xs=$("xa").checked||(mode=="A"&&$("enh").checked);let mx=0,mn=0,first,firstL;const list=[];
+ L.forEach((m,i)=>{const el=!!MF[i]||xs,a=run(false,m,el,!!pp.e,i),b=run(true,m,el,!!pp.e,i);mx+=a.d;mn+=b.d;list.push(a.d);if(!i){first=a;firstL=b}});
+ const av=(mx+mn)/2;
+ $("mx").textContent=f(mx);$("mn").textContent=f(mn);$("av").textContent=f(av);
+ $("tot").textContent=L.length>1?`${L.length}ヒット（各ヒットの最大）：${list.slice(0,12).map(f).join(" / ")}${list.length>12?" …":""}`:"";
+ const hp=n("hp");$("kill").textContent=hp>0&&av>0?`対象HP ${f(hp)}：平均 ${Math.ceil(hp/av)} 回／最短 ${Math.ceil(hp/(mx||1))} 回で撃破（被ダメなら戦闘不能）`:"";
+ if(mode=="A"&&pp.zan&&hp>0){const th=3*n("stat")*Math.pow(chainEff()/100,2);$("kill").textContent+=` ザンテツケン即死判定：HP ${f(hp)} ${hp<th?"＜":"≧"} しきい値 ${f(th)} → ${hp<th?"即死が発動":"即死は発動しない"}`}
+ let r=`<tr><th>工程${L.length>1?"（1ヒット目）":""}</th><th>最大側</th><th>最小側</th></tr>`;
+ first.S.forEach(s=>{const lo=firstL.S.find(x=>x[0]==s[0]);r+=`<tr><td>${s[0]}</td><td>${s[1].toFixed(1)}</td><td>${lo?lo[1].toFixed(1):"-"}</td></tr>`});
+ $("bd").innerHTML=r}
+document.querySelectorAll("input,select").forEach(e=>e.addEventListener("input",calc));
+setMode("A");
+</script></body></html>

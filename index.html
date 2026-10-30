@@ -113,7 +113,7 @@ bah:{r:8,pa:[708,2491,2918,3210,3531,3884,4273,4917,5896],ma:[601,2117,2480,2728
 ale:{r:8,pa:[1056,3114,3648,4012,4414,4855,5341,6142,7371],ma:[1056,3114,3648,4014,4414,4855,5341,6142,7371]},
 hec:{r:8,pa:[1170,2698,3161,3477,3825,4208,4629,5323,6388],ma:[603,1390,1629,1791,1971,2168,2385,2743,3292]}};
 const X=(g,id,l,t,parts,v,o)=>{const m=[],el=[];parts.forEach(q=>{for(let i=0;i<q[1];i++){m.push(q[0]);el.push(q[2]?1:0)}});return Object.assign({n:g+"："+l,l,g,e:id,t,m,el,v},o)};
-const GN=(g,id,l,t,parts,o)=>X(g,id,"ドライビングモード "+l,t,parts,4,Object.assign({u:1},o));
+const GN=(g,id,l,t,parts,o)=>X(g,id,"ドライビングモード："+l.replace(/^.*：/,""),t,parts,4,Object.assign({u:1},o));
 const NM=(g,id,l,t,parts)=>X(g,id,"ノーマルモード："+l,t,parts,9,{});
 const O="召喚獣：オーディン",S1="召喚獣：シヴァ",B1="召喚獣：ブリュンヒルデ",H1="召喚獣：バハムート",A1="召喚獣：アレキサンダー",E1="召喚獣：ヘカトンケイル";
 PR.push(

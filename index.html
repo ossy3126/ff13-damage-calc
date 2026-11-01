@@ -38,6 +38,16 @@ table{width:100%;border-collapse:collapse;font-size:.78rem}td,th{padding:3px 6px
 <label class="ck"><input id="xa" type="checkbox">技に属性がある（属性耐性を適用）</label>
 <label id="erL" class="hide">召喚獣のランク<select id="er"></select></label>
 <label id="glL" class="hide">ドライビングモードのフィニッシュレベル<select id="gl"><option>1</option><option>2</option><option>3</option></select></label>
+<div id="fcW" class="grid hide" style="grid-column:1/-1">
+<label>敵のチェーン耐性(%)<input id="fcr" type="number" min="0" max="100" step="1" value="0"></label>
+<label>敵のブレイク値(%)<input id="flim" type="number" min="100" max="999.9" step="0.1" value="200"></label>
+<label class="ck"><input id="fstag" type="checkbox">撃つ前から敵がブレイク中</label>
+<label class="ck"><input id="femp" type="checkbox">チェーンが途切れている（1ヒット目は0）</label>
+<p class="note" id="fcN" style="grid-column:1/-1;margin:0"></p>
+<div id="zW" class="grid hide" style="grid-column:1/-1">
+<label>敵の最大HP（斬鉄剣の一撃判定用）<input id="zmax" type="number" min="0" step="1" value=""></label>
+<label>斬鉄剣までに与えたダメージ（+ 区切りで足し算。例：1520+3300+864）<input id="zdmg" type="text" inputmode="decimal" value=""></label>
+<p class="note" id="zN" style="grid-column:1/-1;margin:0"></p></div></div>
 <label class="ck atk"><input id="ig" type="checkbox">固有技（物理/魔法耐性のみ無視。プロテス/シェル・デプロテ/デシェル・ブレイブ等は適用）</label>
 <label>攻撃タイプ<select id="type"><option value="p">物理攻撃</option><option value="m">魔法攻撃</option><option value="b">物理＆魔法（両方）</option></select></label>
 <label><span id="stL">攻撃側の物理攻撃力／魔法攻撃力</span><input id="stat" type="number" min="0" value="1700"></label>
@@ -58,9 +68,9 @@ table{width:100%;border-collapse:collapse;font-size:.78rem}td,th{padding:3px 6px
 
 <div class="card"><h2>防御側</h2><div class="grid">
 <div id="rA" class="grid" style="grid-column:1/-1">
-<label id="rtP">物理耐性<select id="rt"><option value="0">無効</option><option value="0.1">耐性</option><option value="0.5">半減</option><option value="1" selected>通常</option><option value="2">弱点</option></select></label>
-<label id="rtM">魔法耐性<select id="rt2"><option value="0">無効</option><option value="0.1">耐性</option><option value="0.5">半減</option><option value="1" selected>通常</option><option value="2">弱点</option></select></label>
-<label id="reL">属性耐性<select id="re"><option value="a">吸収</option><option value="0">無効</option><option value="0.1">耐性</option><option value="0.5">半減</option><option value="1" selected>通常</option><option value="2">弱点</option></select></label>
+<label id="rtP">物理耐性<select id="rt"><option value="0">無効</option><option value="0.1">耐久</option><option value="0.5">半減</option><option value="1" selected>標準</option><option value="2">弱点</option></select></label>
+<label id="rtM">魔法耐性<select id="rt2"><option value="0">無効</option><option value="0.1">耐久</option><option value="0.5">半減</option><option value="1" selected>標準</option><option value="2">弱点</option></select></label>
+<label id="reL">属性耐性<select id="re"><option value="a">吸収</option><option value="0">無効</option><option value="0.1">耐久</option><option value="0.5">半減</option><option value="1" selected>標準</option><option value="2">弱点</option></select></label>
 <label id="wkL" class="ck"><input id="wk" type="checkbox">ウィーク状態（属性耐性を1段階低下）</label>
 </div>
 <div id="rD" class="grid hide" style="grid-column:1/-1">
@@ -119,11 +129,11 @@ const O="召喚獣：オーディン",S1="召喚獣：シヴァ",B1="召喚獣�
 PR.push(
 NM(O,"ody","連閃","p",[[.25,4]]),NM(O,"ody","天臨","p",[[.33,3]]),NM(O,"ody","烈破／絶影","p",[[1,1]]),NM(O,"ody","サンダラ","m",[[1.5,1,1]]),NM(O,"ody","サンダガ","m",[[2.2,1,1]]),
 GN(O,"ody","上＋×：轟剣","p",[[2.33,1,0]]),GN(O,"ody","下＋×：雷光斬","p",[[.25,2,0],[.25,5,1]]),GN(O,"ody","左右＋×：真空破","p",[[.75,4,0],[1.5,3,0]]),GN(O,"ody","○：天鳴万雷","p",[[.66,3,1]]),
-GN(O,"ody","フィニッシュ：斬鉄剣","p",[[3,1,0]],{v:2,fin:[51,85,136],zan:1}),
+GN(O,"ody","フィニッシュ：斬鉄剣","p",[[3,1,0]],{v:2,fin:[51,85,136],zan:1,ft:[[[3,17]],[[5,17]],[[7,17]]],fa:[24,""]}),
 NM(S1,"sti","スティリア ブリザド","m",[[1,1,1]]),NM(S1,"sti","スティリア ブリザラ","m",[[1.5,1,1]]),NM(S1,"sti","スティリア ブリザガ","m",[[2.2,1,1]]),
 NM(S1,"nix","ニックス パワーホイール／フリッパーキック","p",[[1,1]]),NM(S1,"nix","ニックス ダンシングホイール","p",[[.25,4]]),NM(S1,"nix","ニックス ホイールスロー（最大5ヒット）","p",[[.25,5]]),NM(S1,"nix","ニックス トルネードレイヴ","p",[[.43,3]]),NM(S1,"nix","ニックス ブリザラ","m",[[1.5,1,1]]),
 GN(S1,"sti","上＋×：ウィリーラッシュ","p",[[1.25,3,0]]),GN(S1,"sti","下＋×：スプラッシュ","p",[[.5,5,1]]),GN(S1,"sti","左右＋×：アイシクルターン","p",[[.62,4,0]]),GN(S1,"sti","○：エアエッジ","p",[[.25,2,0],[1.25,1,1],[1.25,1,0]]),
-GN(S1,"sti","フィニッシュ：ダイヤモンドダスト","p",[[14,1,1]],{v:2,fin:[103,144,200]}),
+GN(S1,"sti","フィニッシュ：ダイヤモンドダスト","p",[[14,1,1]],{v:2,fin:[103,144,200],ft:[[[3,6,"I"],[5,17,"I"]],[[7,6,"I"],[6,17,"I"]],[[10,6,"I"],[9,17,"I"],[2,5,"I"]]],fa:[17,"I"]}),
 NM(B1,"bry","スラッシャー","p",[[1,1]]),NM(B1,"bry","ヴァルキリーサイズ（最大6ヒット）","p",[[.33,6]]),NM(B1,"bry","ガンショット","p",[[.33,3]]),NM(B1,"bry","ヒートショット／アイスショット／エレキショット／アクアショット","m",[[.85,1,1]]),NM(B1,"bry","ヒートバースト（武器）","p",[[.25,1]]),NM(B1,"bry","ヒートバースト／アイスバースト／エレキバースト／アクアバースト（爆発）","m",[[1.5,1,1]]),
 GN(B1,"bry","上＋×：チョッパースピン","p",[[.83,2,0]]),GN(B1,"bry","下＋×：カルトロップボム","p",[[2.5,1,1]]),GN(B1,"bry","左右＋×：スイーピングターン","p",[[.59,3,0]]),GN(B1,"bry","○：ホットロッド","p",[[.46,3,1]]),
 GN(B1,"bry","フィニッシュ：ムスペルフレイム","p",[[10.05,1,1]],{v:2,fin:[78,114,174]}),
@@ -136,7 +146,7 @@ GN(A1,"ale","左右＋×：苛烈なる制裁（耐性を無視しない・最�
 GN(A1,"ale","フィニッシュ：聖なる審判","p",[[3,1]],{v:2,fin:[101,138,220],dj:1}),
 NM(E1,"hec","ラッシュ","p",[[.14,7]]),NM(E1,"hec","アサルトタックル","p",[[.5,1],[1,1]]),NM(E1,"hec","ハリケーンキック","p",[[1,1]]),NM(E1,"hec","インパルス（最大5ヒット）","p",[[.25,5]]),NM(E1,"hec","クエイク","m",[[2.2,1,1]]),NM(E1,"hec","カウンター（リベンジスタイル中）","p",[[1.5,1]]),
 GN(E1,"hec","上＋×：ガトリングキャノン（約32ヒット）","p",[[.03,32]]),GN(E1,"hec","下＋×：テトラミサイル","p",[[.17,4]]),GN(E1,"hec","左右＋×：ペネトレイトレイ","p",[[.4,4]]),GN(E1,"hec","○：バスターフォース","p",[[3.73,1]]),
-GN(E1,"hec","フィニッシュ：ガイアサルヴォー","p",[[15,1]],{v:2,fin:[54,108,162]}));
+GN(E1,"hec","フィニッシュ：ガイアサルヴォー","p",[[15,1]],{v:2,fin:[54,108,162],ft:[[[1,22],[1,32]],[[2,22],[2,32]],[[3,22],[3,32]]],fa:[38,""]}));
 const GR={};PR.forEach((p,k)=>{const op=new Option(p.l||p.n,k);if(p.g){if(!GR[p.g]){GR[p.g]=document.createElement("optgroup");GR[p.g].label=p.g;$("pre").appendChild(GR[p.g])}GR[p.g].appendChild(op)}else $("pre").add(op)});
 let MF=[];
 const czf=(a,f)=>{const o=[];for(let i=0;i<a.length;){let j=i;while(j<a.length&&a[j]==a[i]&&!!f[j]==!!f[i])j++;o.push(a[i]+(j-i>1?"*"+(j-i):"")+(f[i]?"e":""));i=j}return o.join("+")};
@@ -258,8 +268,16 @@ $("en").addEventListener("input",()=>{const e=EN[+$("en").value];$("es").innerHT
 $("es").addEventListener("input",applyEnemy);
 let wasSm=false,limPrev=false;
 function setEid(p){const s=ST[p.e],er=$("er");if(er.dataset.id!=p.e){er.innerHTML="";for(let r=16;r>=s.r;r--)er.add(new Option(r,r));er.dataset.id=p.e}$("stat").value=(p.t=="m"?s.ma:s.pa)[+er.value-s.r]}
-function chainEff(){return Math.min(999.9,n("chain")+finInc())}
-function finInc(){const p=PR[$("pre").value];return mode=="A"&&p.fin?p.fin[+$("gl").value-1]:0}
+// フィニッシュ技：ダメージ前の上昇は連続ヒット（チェーン耐性・条件補正あり）、攻撃のヒット自身の上昇まで含めた値でダメージ（実測）
+function finSim(){const p=PR[$("pre").value];if(mode!="A"||!p.ft)return null;const lv=+$("gl").value-1;
+ let cur=Math.min(999.9,Math.max(100,n("chain"))),stag=$("fstag").checked,emp=$("femp").checked&&!stag&&cur<=100;const lim=Math.max(100,n("flim")||200),cr=Math.min(100,Math.max(0,n("fcr")));
+ let e=$("re").value;if($("wk").checked)e=ES[Math.min(5,ES.indexOf(e)+1)];const tr2=x=>Math.floor(x*100+1e-6)/100;
+ const hits=[];p.ft[lv].forEach(q=>{for(let i=0;i<q[0];i++)hits.push([q[1],q[2]||""])});hits.push([p.fa[0],p.fa[1]]);
+ let brk=-1;hits.forEach(([b,el],i)=>{const near=!stag&&(cur-100)>=(lim-100)*0.9;let v=tr2(b*(stag?100:100-cr)/100)+(el&&e=="2"?0.1:0)+(near?0.5:0)+(stag?0.1:0);v=tr2(v);
+  if(emp){v=0;emp=false}cur=Math.min(stag?999.9:lim,cur+v);if(!stag&&cur>=lim){stag=true;cur=Math.min(999.9,cur+100);brk=i}});
+ return{cur,brk,n:hits.length}}
+function chainEff(){const s=finSim();if(s)return s.cur;return Math.min(999.9,n("chain")+finInc())}
+function finInc(){const p=PR[$("pre").value];return mode=="A"&&p.fin&&!p.ft?p.fin[+$("gl").value-1]:0}
 const AB={a:[["ab1",1.5],["ab3",2],["ab4",5]],r:[["ab1",1.25],["ab3",1.75]],b:[["ab2",2]],g:[["ab2",2.45]]};
 function applyPreset(){if(!["たたかう","エリアブラスト"].includes(PR[$("pre").value].n))$("ch").value="o";const sz=$("ch").value=="s";$("ab2").disabled=sz;if(sz)$("ab2").checked=false;const p=PR[$("pre").value];const sm=!!p.e;if(sm&&!wasSm)limPrev=$("lim").checked;if(!sm&&wasSm)$("lim").checked=limPrev;if(sm)$("lim").checked=true;$("lim").disabled=sm;wasSm=sm;if(!p.t)return;$("ig").checked=!!p.u;$("xa").checked=!!p.x;if(p.e)setEid(p);const c=$("ch").value,d=p.f?p.f(c):{m:p.m,h:p.h||1,v:p.v};let m=($("brk").checked&&p.b)?p.b:d.m;const h=m.length>1?m.length:d.h;
  if(p.k){const ab=(AB[p.k]||[]).filter(x=>x[0]=="ab4"?$("ab4").value!="0":$(x[0]).checked).map(x=>x[1]);if(ab.length)m=[+(Math.max(...ab)/h).toFixed(4)]}
@@ -286,7 +304,7 @@ function run(low,mm,el,pen,ix){
  const S=[],t=$("type").value,vr=VR(ix||0);let d=n("stat")*mm;S.push(["基礎 = 攻撃力×倍率",d]);
  d*=1+TA()/100;S.push(["1 攻撃力アップ",d]);{let v=parseFloat($("tb").value);if(mode=="A"&&$("ig").checked&&v==.1)v=1;d*=v}S.push(["2 ブレイブ/フェイス",d]);
  if(low){d*=1-vr;S.push(["3 ばらつき下限",d])}
- if(mode=="A"){d*=chainEff()/100;S.push(["4 チェーンボーナス"+(finInc()?"（フィニッシュ+"+finInc()+"・上限999.9%）":""),d])}
+ if(mode=="A"){const fs=finSim();d*=chainEff()/100;S.push(["4 チェーンボーナス"+(fs?"（フィニッシュの連続ヒット後 "+chainEff().toFixed(1)+"%）":finInc()?"（フィニッシュ+"+finInc()+"・上限999.9%）":""),d])}
  d*=Math.max(0,1+TC()/100);S.push(["5 ダメージ補正",d]);
  if(mode=="A"&&$("enh").checked){d*=1.3;S.push(["6 エン系 ×1.3",d])}
  const hp=n("hp");if(mode=="A"&&$("db").checked&&hp>0&&hp<1.2*d){d*=1.5;S.push(["7 エンドストライク ×1.5",d])}
@@ -302,7 +320,7 @@ function run(low,mm,el,pen,ix){
  if(mode=="D"&&((uP&&$("nP").checked)||(uM&&$("nM").checked))){d=0;S.push(["15 連鎖無効（1ヒットごと）",0])}
  if(mode=="D"&&d>0){let r=0;if(uP)r+=+$("rP").value;if(uM)r+=+$("rM").value;if(uP||uM)r+=+$("rB").value;if(r>0){d=Math.max(0,d-r);S.push(["15 連鎖軽減 −"+r+"（1ヒットごと）",d])}}
  return{d:Math.max(0,d),S}}
-function vis(){const pp0=PR[$("pre").value];mults();const anyEl=MF.some(Boolean)||$("xa").checked||(mode=="A"&&$("enh").checked);["reL","wkL","peL","barL"].forEach(id=>$(id).classList.toggle("hide",!anyEl));$("xa").disabled=false;$("erL").classList.toggle("hide",mode!="A"||!pp0.e);$("glL").classList.toggle("hide",mode!="A"||!pp0.fin);$("chL").classList.toggle("hide",mode!="A"||!["たたかう","エリアブラスト"].includes(PR[$("pre").value].n));const T0=$("type").value,D0=mode=="D";const tbT={p:["ブレイブ系","ブレイブ ×1.4","ブレイダ ×1.8","減力 ×0.1"],m:["フェイス系","フェイス ×1.4","フェイダ ×1.8","減魔 ×0.1"],b:["ブレイブ／フェイス系","ブレイブ／フェイス ×1.4","ブレイダ／フェイダ ×1.8","減力／減魔 ×0.1"]}[T0];$("tbL").textContent=tbT[0];[1,2].forEach(i=>$("tb").options[i].textContent=tbT[i]);const o2=$("tb").options[2];o2.hidden=o2.disabled=D0;if(D0&&$("tb").value=="1.8")$("tb").value="1";$("stL").textContent=(D0?"敵の":"味方の")+{p:"物理攻撃力",m:"魔法攻撃力",b:"物理攻撃力／魔法攻撃力"}[T0];const dn=$("dn");[...dn.options].forEach(o=>{const h=(o.value[0]=="p"&&T0=="m")||(o.value[0]=="m"&&T0=="p");o.hidden=h;o.disabled=h});if(dn.selectedOptions[0].disabled)dn.value="0";$("rPL").classList.toggle("hide",!D0||T0=="m");$("nPL").classList.toggle("hide",!D0||T0=="m");$("rML").classList.toggle("hide",!D0||T0=="p");$("nML").classList.toggle("hide",!D0||T0=="p");$("knL").classList.toggle("hide",mode!="A"||$("ak").value=="0");$("rnL").classList.toggle("hide",mode!="A"||$("rv").value=="0");const m=$("gm").value;$("gxL").classList.toggle("hide",mode!="D"||m!="r");$("guL").classList.toggle("hide",mode!="D"||(m!="r"&&m!="h"));const t=(mode=="A"&&PR[$("pre").value].dj)?"b":$("type").value;[["rtP","ptP","dpP","proL"],["rtM","ptM","dpM","shL"]].forEach((g,i)=>g.forEach(id=>$(id).classList.toggle("hide",i==0?t=="m":t=="p")))}
+function vis(){const pp0=PR[$("pre").value];mults();const anyEl=MF.some(Boolean)||$("xa").checked||(mode=="A"&&$("enh").checked);["reL","wkL","peL","barL"].forEach(id=>$(id).classList.toggle("hide",!anyEl));$("xa").disabled=false;$("erL").classList.toggle("hide",mode!="A"||!pp0.e);$("glL").classList.toggle("hide",mode!="A"||!pp0.fin);$("fcW").classList.toggle("hide",mode!="A"||!pp0.ft);$("zW").classList.toggle("hide",mode!="A"||!pp0.zan);{const fs=finSim();$("fcN").textContent=fs?`ダメージ時のチェーンボーナス：${fs.cur.toFixed(1)}%（ダメージ前の連続ヒットと攻撃のヒット自身の上昇を含む、全${fs.n}ヒット${fs.brk>=0?`・${fs.brk+1}ヒット目でブレイク`:""}）。チェーンボーナス欄には撃つ直前の値を入れてください。`:""}$("chL").classList.toggle("hide",mode!="A"||!["たたかう","エリアブラスト"].includes(PR[$("pre").value].n));const T0=$("type").value,D0=mode=="D";const tbT={p:["ブレイブ系","ブレイブ ×1.4","ブレイダ ×1.8","減力 ×0.1"],m:["フェイス系","フェイス ×1.4","フェイダ ×1.8","減魔 ×0.1"],b:["ブレイブ／フェイス系","ブレイブ／フェイス ×1.4","ブレイダ／フェイダ ×1.8","減力／減魔 ×0.1"]}[T0];$("tbL").textContent=tbT[0];[1,2].forEach(i=>$("tb").options[i].textContent=tbT[i]);const o2=$("tb").options[2];o2.hidden=o2.disabled=D0;if(D0&&$("tb").value=="1.8")$("tb").value="1";$("stL").textContent=(D0?"敵の":"味方の")+{p:"物理攻撃力",m:"魔法攻撃力",b:"物理攻撃力／魔法攻撃力"}[T0];const dn=$("dn");[...dn.options].forEach(o=>{const h=(o.value[0]=="p"&&T0=="m")||(o.value[0]=="m"&&T0=="p");o.hidden=h;o.disabled=h});if(dn.selectedOptions[0].disabled)dn.value="0";$("rPL").classList.toggle("hide",!D0||T0=="m");$("nPL").classList.toggle("hide",!D0||T0=="m");$("rML").classList.toggle("hide",!D0||T0=="p");$("nML").classList.toggle("hide",!D0||T0=="p");$("knL").classList.toggle("hide",mode!="A"||$("ak").value=="0");$("rnL").classList.toggle("hide",mode!="A"||$("rv").value=="0");const m=$("gm").value;$("gxL").classList.toggle("hide",mode!="D"||m!="r");$("guL").classList.toggle("hide",mode!="D"||(m!="r"&&m!="h"));const t=(mode=="A"&&PR[$("pre").value].dj)?"b":$("type").value;[["rtP","ptP","dpP","proL"],["rtM","ptM","dpM","shL"]].forEach((g,i)=>g.forEach(id=>$(id).classList.toggle("hide",i==0?t=="m":t=="p")))}
 function mults(){const ml=[];MF=[];$("multi").value.replace(/＋/g,"+").split("+").forEach(tk=>{const q=tk.trim().match(/^([\d.]+)(?:[*×x](\d+))?\s*(e|E|属)?$/);if(!q)return;const v=parseFloat(q[1]),k=q[2]?Math.max(1,parseInt(q[2])||1):1,fl=!!q[3];for(let i=0;i<k;i++){ml.push(v);MF.push(fl)}});if(ml.length>1){$("hits").value=ml.length;return ml}const h=Math.min(50,Math.max(1,Math.floor(n("hits"))));const f0=MF[0]||false;MF=Array(h).fill(f0);return Array(h).fill(ml[0]||0)}
 function calc(){vis();$("taV").textContent=TA();$("tcV").textContent=TC();$("senV").textContent=senv().toFixed(3);
  $("rt").disabled=false;
@@ -312,7 +330,11 @@ function calc(){vis();$("taV").textContent=TA();$("tcV").textContent=TC();$("sen
  $("mx").textContent=f(mx);$("mn").textContent=f(mn);$("av").textContent=f(av);
  $("tot").textContent=L.length>1?`${L.length}ヒット（各ヒットの最大）：${list.slice(0,12).map(f).join(" / ")}${list.length>12?" …":""}`:"";
  const hp=n("hp");$("kill").textContent=hp>0&&av>0?`対象HP ${f(hp)}：平均 ${Math.ceil(hp/av)} 回／最短 ${Math.ceil(hp/(mx||1))} 回で撃破（被ダメなら戦闘不能）`:"";
- if(mode=="A"&&pp.zan&&hp>0){const th=3*n("stat")*Math.pow(chainEff()/100,2);$("kill").textContent+=` ザンテツケン即死判定：HP ${f(hp)} ${hp<th?"＜":"≧"} しきい値 ${f(th)} → ${hp<th?"即死が発動":"即死は発動しない"}`}
+ if(mode=="A"&&pp.zan){const mxh=n("zmax"),th=3*n("stat")*Math.pow(chainEff()/100,2);let dealt=0;$("zdmg").value.replace(/＋/g,"+").split("+").forEach(t=>{const v=parseFloat(t);if(!isNaN(v))dealt+=v});
+   if(mxh>0){const rem=Math.max(0,mxh-dealt),need=Math.max(0,Math.floor(mxh-th)+1);
+    $("zN").textContent=`しきい値 ${f(th)}（物理攻撃力×3.0×${(chainEff()/100).toFixed(3)}²）。最大HP ${f(mxh)} − 与えたダメージ ${f(dealt)} ＝ 残りHP ${f(rem)} → ${rem<th?"一撃で倒せる":"一撃では倒せない"}。一撃にするには、斬鉄剣までに合計 ${f(need)} 以上のダメージが必要です${rem<th?"":`（あと ${f(need-dealt)}）`}。`}
+   else $("zN").textContent="敵の最大HPを入れると、与えたダメージから残りHPを出して一撃判定をします。";}
+ if(mode=="A"&&pp.zan&&hp>0){const th=3*n("stat")*Math.pow(chainEff()/100,2);$("kill").textContent+=` 斬鉄剣の一撃判定（ヒット後のチェーンボーナス ${chainEff().toFixed(1)}%）：HP ${f(hp)} ${hp<th?"＜":"≧"} しきい値 ${f(th)} → ${hp<th?"一撃で倒せる":"一撃では倒せない"}`}
  let r=`<tr><th>工程${L.length>1?"（1ヒット目）":""}</th><th>最大側</th><th>最小側</th></tr>`;
  first.S.forEach(s=>{const lo=firstL.S.find(x=>x[0]==s[0]);r+=`<tr><td>${s[0]}</td><td>${s[1].toFixed(1)}</td><td>${lo?lo[1].toFixed(1):"-"}</td></tr>`});
  $("bd").innerHTML=r}

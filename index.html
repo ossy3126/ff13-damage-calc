@@ -93,11 +93,34 @@ details.intro[open]{background:var(--card);border:1px solid var(--line);border-r
 details.intro{order:0;flex:0 0 auto}details.intro[open]{flex:1 1 100%}
 .xlink,.rst{display:inline-block;padding:3px 12px;border:1px solid rgba(110,190,255,.4);border-radius:999px;font-size:.8rem;color:var(--text);text-decoration:none;background:linear-gradient(180deg,rgba(40,70,110,.55),rgba(12,24,44,.75));cursor:pointer}
 .xlink:hover,.rst:hover{border-color:var(--accent);box-shadow:0 0 10px rgba(98,214,255,.35)}
+.howto{font-size:.84rem;line-height:1.7;color:var(--text)}.howto p{margin:.6em 0 .2em}.howto p:first-child{margin-top:0}.howto b{color:#9fd8ff}.howto ol,.howto ul{margin:0;padding-left:1.4em}.howto code{font-size:.82rem;padding:0 4px;border-radius:4px;background:rgba(0,0,0,.4);color:#ffd59a}.howto .note{margin-top:.8em}
 </style></head><body><main>
 <h1>⚔️ FF13 ダメージ計算機</h1>
 <p class="lead">与ダメージ（味方→敵）と被ダメージ（敵→味方）を、最大・平均・最小で計算します。</p>
 <div class="hdr"><details class="intro"><summary>使い方・出典</summary>
-<p class="note">用語は日本語版の名称です。<br>出典：ファイナルファンタジーXIII バトルアルティマニア<br>入力した内容はこのブラウザに自動で保存され、次に開いたときもそのまま残ります。<br>非公式のファンメイドツールです。ファイナルファンタジーは株式会社スクウェア・エニックスの商標または登録商標です。</p>
+<div class="howto">
+<p><b>与ダメージ（味方→敵）</b></p>
+<ol>
+<li>「攻撃する技」のプリセットで技を選びます（たたかう、ルイン、属性魔法、召喚獣の技など）。倍率・ヒット数・ばらつきが自動で入ります。</li>
+<li>味方の物理攻撃力／魔法攻撃力を入れます。召喚獣は、ランクを選ぶと攻撃力が入ります。</li>
+<li>「攻撃側の補正」で、ブレイブ／フェイス、チェーンボーナス、アタッカーのロールレベルなどを設定します。</li>
+<li>「防御側」の「対象の敵」で敵を選ぶと、耐性と対象のHPが入ります（名前の一部で探せます）。属性のある技は「技の属性」も選びます。</li>
+<li>画面上の「最大・平均・最小」にダメージが出ます。対象のHPがあると、撃破までの回数も出ます。</li>
+</ol>
+<p><b>被ダメージ（敵→味方）</b></p>
+<ol>
+<li>上のタブで「被ダメージ」に切り替えます。</li>
+<li>「敵」と「敵の技」を選ぶと、攻撃力・倍率・ヒット数などが入ります。</li>
+<li>「防御側」で、装備の耐性(%)、プロテス／シェル、ディフェンダーのロールや行動などを設定します。</li>
+</ol>
+<p><b>手で入力するとき</b></p>
+<ul>
+<li>倍率がヒットごとに違うときは <code>+</code> でつなぎます（例：<code>0.1+3.5</code>）。同じ倍率が続くときは <code>*</code> で回数を書きます（例：<code>0.25*4</code>）。属性のあるヒットは末尾に <code>e</code>（例：<code>0.25*2+0.25*5e</code>）。</li>
+<li>計算の各工程は、いちばん下の「計算の内訳」で確認できます。</li>
+<li>入力はこのブラウザに自動で保存されます。「入力を初期値に戻す」で最初の状態に戻せます。</li>
+</ul>
+<p class="note">用語は日本語版の名称です。出典：『ファイナルファンタジーXIII バトルアルティマニア』。非公式のファンメイドツールです。ファイナルファンタジーは株式会社スクウェア・エニックスの商標または登録商標です。</p>
+</div>
 </details><a class="xlink" href="https://ossy3126.github.io/ff13-chain-bonus-calculator/" target="_blank" rel="noopener">⛓️ チェーンボーナス計算機へ</a><button type="button" class="rst" id="stReset">入力を初期値に戻す</button></div>
 <div class="tabs"><button id="tA" class="on">与ダメージ（味方→敵）</button><button id="tD">被ダメージ（敵→味方）</button></div>
 

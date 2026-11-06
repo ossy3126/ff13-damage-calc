@@ -537,7 +537,9 @@ tgRender();
 document.querySelectorAll("input,select").forEach(e=>e.addEventListener("input",calc));
 // ===== 入力の自動保存（このブラウザだけ） =====
 const SKEY="ff13dmg_state";
-const stGet=()=>{const v={};document.querySelectorAll("main input[id],main select[id]").forEach(e=>{v[e.id]=e.type==="checkbox"?e.checked:e.value});return{mode,v}};
+// 技・敵のデータを直したら上げる。保存した入力が古いデータのときは、選んでいる技・敵の値を入れ直す
+const DATA_VER=2;
+const stGet=()=>{const v={};document.querySelectorAll("main input[id],main select[id]").forEach(e=>{v[e.id]=e.type==="checkbox"?e.checked:e.value});return{mode,v,ver:DATA_VER}};
 let stT=null;const stSave=()=>{clearTimeout(stT);stT=setTimeout(()=>{try{localStorage.setItem(SKEY,JSON.stringify(stGet()))}catch(e){}},200)};
 function stLoad(){let d=null;try{d=JSON.parse(localStorage.getItem(SKEY)||"null")}catch(e){}if(!d||!d.v)return false;const v=d.v;
  const put=id=>{const e=$(id);if(!e||!(id in v))return;if(e.type==="checkbox")e.checked=!!v[id];else e.value=v[id]};
@@ -545,7 +547,9 @@ function stLoad(){let d=null;try{d=JSON.parse(localStorage.getItem(SKEY)||"null"
  // 選択肢が他の欄で決まるものを先に（敵→敵の技、プリセット→召喚獣のランク、敵の検索）
  put("enQ");enRenderD();put("en");{const e=EN[+$("en").value];$("es").innerHTML="";if(e)e.k.forEach((k,j)=>$("es").add(new Option(k.l,j)))}
  put("pre");put("ch");applyPreset();put("tgQ");tgRender();
- putAll();tgFill();putAll();setMode(d.mode==="D"?"D":"A");return true}
+ putAll();tgFill();putAll();
+ if(d.ver!==DATA_VER){if(+$("en").value>=0)applyEnemy();if(PR[$("pre").value]&&PR[$("pre").value].t)applyPreset();stSave()}
+ setMode(d.mode==="D"?"D":"A");return true}
 document.addEventListener("input",stSave);document.addEventListener("click",e=>{if(e.target.closest(".tabs,.chips"))stSave()});
 $("stReset").onclick=()=>{try{localStorage.removeItem(SKEY)}catch(e){}location.reload()};
 if(!stLoad())setMode("A");

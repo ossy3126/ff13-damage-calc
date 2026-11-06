@@ -2,12 +2,14 @@
 <html lang="ja"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>FF13 ダメージ計算機</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Exo+2:wght@500;600;700&family=Klee+One:wght@400;600&display=swap">
 <style>
 :root{--bg:#f5f6fa;--card:#fff;--text:#1b2030;--muted:#667088;--line:#d9deea;--accent:#2f6fed;--out:#eef3ff;--on:#fff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12151d;--card:#1b2030;--text:#e8ecf6;--muted:#97a1b8;--line:#2e3650;--accent:#6c9bff;--out:#222b45;--on:#0b1020;color-scheme:dark}}
 :root[data-theme="dark"]{--bg:#12151d;--card:#1b2030;--text:#e8ecf6;--muted:#97a1b8;--line:#2e3650;--accent:#6c9bff;--out:#222b45;--on:#0b1020;color-scheme:dark}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
-body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;line-height:1.55}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"UD Digi Kyokasho NK-R","UD デジタル 教科書体 NK-R","UD Digi Kyokasho NK","UD Digi Kyokasho N-R","UD デジタル 教科書体 N-R","Klee One","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;line-height:1.55}
 main{max-width:760px;margin:0 auto;padding:14px}
 h1{font-size:1.25rem;margin:.3rem 0}h2{font-size:.95rem;margin:0 0 8px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
@@ -35,15 +37,75 @@ label.ck input{margin-top:3px}
 details.more{margin-top:12px;border-top:1px dashed var(--line);padding-top:8px}details.more>summary{cursor:pointer;font-size:.85rem;color:var(--accent);font-weight:600}details.more[open]>summary{margin-bottom:8px}
 #tgW{margin-bottom:10px;padding-bottom:10px;border-bottom:1px dashed var(--line)}
 .hide{display:none!important}
+/* ===== FF13風デザイン（チェーンボーナス計算機とそろえる） ===== */
+:root:root:root{--bg:#050a14;--card:rgba(12,24,44,.84);--text:#e4efff;--muted:#8aa3c4;--line:rgba(110,190,255,.3);--accent:#62d6ff;--out:rgba(0,0,0,.45);--on:#04101e;
+  --hot:#ffb23f;--hot2:#ff5a36;--disp:"Exo 2","UD Digi Kyokasho NK-R","UD デジタル 教科書体 NK-R","UD Digi Kyokasho NK","UD Digi Kyokasho N-R","UD デジタル 教科書体 N-R","Klee One","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;color-scheme:dark}
+body{background:
+  radial-gradient(1100px 560px at 15% -10%,rgba(40,120,200,.28),transparent 60%),
+  radial-gradient(900px 500px at 110% 110%,rgba(120,60,200,.18),transparent 60%),
+  repeating-linear-gradient(115deg,rgba(120,190,255,.035) 0 1px,transparent 1px 22px),
+  linear-gradient(180deg,#07101f,#03060d);background-attachment:fixed;color:var(--text)}
+h1{font-family:var(--disp),system-ui,sans-serif;font-weight:700;letter-spacing:.04em;font-size:1.4rem;
+  background:linear-gradient(180deg,#fff 0%,#cfe8ff 45%,#7cc4ff 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 10px rgba(90,180,255,.35))}
+.card{background:linear-gradient(160deg,rgba(18,36,64,.88),rgba(8,16,32,.88));border:1px solid var(--line);border-radius:10px;box-shadow:0 0 14px rgba(70,170,255,.18),inset 0 1px 0 rgba(255,255,255,.05)}
+.card h2{color:var(--accent);letter-spacing:.12em;text-shadow:0 0 8px rgba(98,214,255,.55);font-size:.9rem}
+.card h2::before{content:"◆";font-size:.6rem;margin-right:6px;vertical-align:2px;color:#bfefff}
+label{color:var(--muted)}
+input:not([type="checkbox"]),select{background:rgba(2,8,20,.78);color:var(--text);border-color:rgba(110,190,255,.35)}
+input:not([type="checkbox"]):focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px rgba(98,214,255,.25),0 0 10px rgba(98,214,255,.35)}
+.tabs button{background:linear-gradient(180deg,rgba(40,70,110,.55),rgba(12,24,44,.75));border-color:rgba(110,190,255,.4);color:var(--text)}
+.tabs button.on{background:linear-gradient(180deg,#5fd0ff,#2a7fd6);color:#04101e;border-color:#9fe6ff;box-shadow:0 0 12px rgba(98,214,255,.55)}
+.chips button{background:linear-gradient(180deg,rgba(40,70,110,.55),rgba(12,24,44,.75));border-color:rgba(110,190,255,.4);color:var(--text)}
+.chips button:hover,.tabs button:not(.on):hover{border-color:var(--accent);box-shadow:0 0 10px rgba(98,214,255,.35)}
+/* 結果：平均を大きく、FF13のダメージ数字のように光らせる */
+.sumbar{background:linear-gradient(180deg,rgba(5,10,20,.96),rgba(5,10,20,.88));padding:8px 0 6px;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+.res{grid-template-columns:1fr 1.35fr 1fr;align-items:end}
+.res div{background:rgba(0,0,0,.45);border:1px solid rgba(255,190,90,.3);border-radius:8px}
+.res b{font-family:var(--disp),system-ui,sans-serif;font-weight:700;color:#fff;text-shadow:0 0 10px rgba(255,178,63,.7),0 0 2px #ffcf7a;font-variant-numeric:tabular-nums}
+.sumbar .res div:nth-child(2){border-color:rgba(255,190,90,.7);box-shadow:0 0 12px rgba(255,140,50,.35)}
+.sumbar .res div:nth-child(2) b{font-size:1.6rem}
+.res span{color:#ffd59a;letter-spacing:.1em}
+/* チェックボックス */
+input[type="checkbox"]{-webkit-appearance:none;appearance:none;flex:0 0 auto;width:18px;height:18px;margin:0;border:1.5px solid rgba(110,190,255,.6);border-radius:4px;background:rgba(2,8,20,.75);display:inline-grid;place-content:center;cursor:pointer}
+input[type="checkbox"]::before{content:"";width:10px;height:10px;transform:scale(0);clip-path:polygon(14% 44%,0 65%,50% 100%,100% 16%,80% 0,43% 62%);background:#04101e;transition:transform .12s}
+input[type="checkbox"]:checked{background:linear-gradient(180deg,#7fdcff,#2a86e0);border-color:#a8e6ff;box-shadow:0 0 8px rgba(98,214,255,.6)}
+input[type="checkbox"]:checked::before{transform:scale(1)}
+input[type="checkbox"]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.cks label.ck{color:var(--text)}
+details.more>summary{color:var(--accent)}
+html{background:#03060d}
+/* オンにした項目は文字も光らせる */
+.cks label.ck:has(input:checked)>span{color:#bfefff;text-shadow:0 0 6px rgba(98,214,255,.5)}
+/* 内訳の表 */
+table{font-variant-numeric:tabular-nums}th{color:#9fd8ff;font-weight:600}td,th{border-bottom-color:rgba(110,190,255,.15)}
+tbody tr:hover td,table tr:hover td{background:rgba(98,214,255,.06)}
+#tot{color:#ffd59a}
+#kill{color:#cfe8ff}
+.note{color:var(--muted)}
+/* スマホ：押しやすく */
+@media (max-width:600px){input[type="checkbox"]{width:22px;height:22px}input[type="checkbox"]::before{width:12px;height:12px}.cks label.ck{min-height:34px}.sumbar .res div:nth-child(2) b{font-size:1.4rem}}
+input,select,button,textarea{font-family:inherit}
+small.hint,.cks label.ck span small{font-size:.74rem;color:#a9c0de}
+.lead{margin:0 0 8px;color:var(--muted);font-size:.85rem}
+.hdr{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start;margin-bottom:10px}
+details.intro{flex:1 1 100%;order:3}details.intro>summary{display:inline-block;cursor:pointer;padding:3px 12px;border:1px solid var(--line);border-radius:999px;font-size:.8rem;color:var(--accent)}
+details.intro[open]{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 12px}details.intro[open]>summary{margin-bottom:6px}
+details.intro{order:0;flex:0 0 auto}details.intro[open]{flex:1 1 100%}
+.xlink,.rst{display:inline-block;padding:3px 12px;border:1px solid rgba(110,190,255,.4);border-radius:999px;font-size:.8rem;color:var(--text);text-decoration:none;background:linear-gradient(180deg,rgba(40,70,110,.55),rgba(12,24,44,.75));cursor:pointer}
+.xlink:hover,.rst:hover{border-color:var(--accent);box-shadow:0 0 10px rgba(98,214,255,.35)}
 </style></head><body><main>
 <h1>⚔️ FF13 ダメージ計算機</h1>
-<p class="note">用語は日本語版の名称です。<br>出典：ファイナルファンタジーXIII バトルアルティマニア<br>非公式のファンメイドツールです。ファイナルファンタジーは株式会社スクウェア・エニックスの商標または登録商標です。</p>
+<p class="lead">与ダメージ（味方→敵）と被ダメージ（敵→味方）を、最大・平均・最小で計算します。</p>
+<div class="hdr"><details class="intro"><summary>使い方・出典</summary>
+<p class="note">用語は日本語版の名称です。<br>出典：ファイナルファンタジーXIII バトルアルティマニア<br>入力した内容はこのブラウザに自動で保存され、次に開いたときもそのまま残ります。<br>非公式のファンメイドツールです。ファイナルファンタジーは株式会社スクウェア・エニックスの商標または登録商標です。</p>
+</details><a class="xlink" href="https://ossy3126.github.io/ff13-chain-bonus-calculator/" target="_blank" rel="noopener">⛓️ チェーンボーナス計算機へ</a><button type="button" class="rst" id="stReset">入力を初期値に戻す</button></div>
 <div class="tabs"><button id="tA" class="on">与ダメージ（味方→敵）</button><button id="tD">被ダメージ（敵→味方）</button></div>
 
 <div class="sumbar"><div class="res"><div><b id="mx">0</b><span>最大</span></div><div><b id="av">0</b><span>平均</span></div><div><b id="mn">0</b><span>最小</span></div></div><p id="kill" class="note"></p></div>
 
 <div class="card"><h2>攻撃する技</h2>
 <div class="grid">
+<label class="dm hide">敵を探す<input id="enQ" type="search" placeholder="名前で探す（例：オーディン、べひーもす）"></label>
 <label class="dm hide">敵<select id="en"></select></label>
 <label class="dm hide">敵の技<select id="es"></select></label>
 <label class="atk wide">プリセット<select id="pre"></select></label>
@@ -329,8 +391,13 @@ E("13章","オーファン第1形態（陰モード）",1367,1163,[Z("搾取の�
 E("13章","オーファン第1形態（陰陽モード）",1367,1367,[Z("殺戮のエディプス（物理攻撃力で計算）","m",[[.5,1]],0,1367),Z("搾取のエレクトラ","m",[[1,1]],14),Z("ディエス・イレ","b",[[3.5,1]],14),Z("黒ルイン","m",[[1,1]],9)]),
 E("13章","オーファン第2形態",1215,1215,[Z("制裁（通常時）","p",[[1,1]],14),Z("なげきの慟哭（通常時）","m",[[.5,1]],9),Z("万象の妖光（通常時・物理＆魔法・魔法攻撃力で計算）","b",[[4,1]],69),Z("黒ルイン（姿変化中）","m",[[1,1]],9,683)])
 ];
-const EG={};$("en").add(new Option("（手動入力）",-1));
-EN.forEach((e,i)=>{const op=new Option(e.n,i);if(!EG[e.g]){EG[e.g]=document.createElement("optgroup");EG[e.g].label=e.g;$("en").appendChild(EG[e.g])}EG[e.g].appendChild(op)});
+// 被ダメージの敵一覧（名前で絞り込める。ひらがなはカタカナとしても探す）
+const kataD=t=>t.replace(/[\u3041-\u3096]/g,c=>String.fromCharCode(c.charCodeAt(0)+0x60));
+function enRenderD(){const sel=$("en"),keep=sel.value,q=($("enQ").value||"").trim().toLowerCase();sel.innerHTML="";sel.add(new Option(q?"（見つかった敵から選ぶ）":"（手動入力）",-1));const EG={};let cnt=0;
+ EN.forEach((e,i)=>{if(q){const t=e.n.toLowerCase();if(!t.includes(q)&&!t.includes(kataD(q)))return}const op=new Option(e.n,i);if(!EG[e.g]){EG[e.g]=document.createElement("optgroup");EG[e.g].label=e.g;sel.appendChild(EG[e.g])}EG[e.g].appendChild(op);cnt++});
+ if(q&&!cnt)sel.options[0].text="（見つかりません）";sel.value=[...sel.options].some(o=>o.value===keep)?keep:"-1"}
+enRenderD();
+$("enQ").addEventListener("input",()=>{enRenderD();const sel=$("en"),first=[...sel.options].find(o=>+o.value>=0);if($("enQ").value.trim()&&first&&sel.value==="-1"){sel.value=first.value;sel.dispatchEvent(new Event("input"))}});
 function applyEnemy(){const e=EN[+$("en").value];if(!e)return;const k=e.k[+$("es").value];if(!k)return;
  $("type").value=k.t;$("stat").value=k.sv!=null?k.sv:(k.t=="m"?e.ma:e.pa);$("multi").value=czf(k.m,k.el);$("vr").value=k.v;$("hits").value=k.m.length;$("xa").checked=false;FXon=!!k.fx}
 let FXon=false;["type","stat","multi","vr","hits"].forEach(i=>$(i).addEventListener("input",()=>{FXon=false}));
@@ -442,5 +509,18 @@ $("tgE").addEventListener("input",tgHp);
 $("pre").addEventListener("input",tgElFromPreset);
 tgRender();
 document.querySelectorAll("input,select").forEach(e=>e.addEventListener("input",calc));
-setMode("A");
+// ===== 入力の自動保存（このブラウザだけ） =====
+const SKEY="ff13dmg_state";
+const stGet=()=>{const v={};document.querySelectorAll("main input[id],main select[id]").forEach(e=>{v[e.id]=e.type==="checkbox"?e.checked:e.value});return{mode,v}};
+let stT=null;const stSave=()=>{clearTimeout(stT);stT=setTimeout(()=>{try{localStorage.setItem(SKEY,JSON.stringify(stGet()))}catch(e){}},200)};
+function stLoad(){let d=null;try{d=JSON.parse(localStorage.getItem(SKEY)||"null")}catch(e){}if(!d||!d.v)return false;const v=d.v;
+ const put=id=>{const e=$(id);if(!e||!(id in v))return;if(e.type==="checkbox")e.checked=!!v[id];else e.value=v[id]};
+ const putAll=()=>Object.keys(v).forEach(put);
+ // 選択肢が他の欄で決まるものを先に（敵→敵の技、プリセット→召喚獣のランク、敵の検索）
+ put("enQ");enRenderD();put("en");{const e=EN[+$("en").value];$("es").innerHTML="";if(e)e.k.forEach((k,j)=>$("es").add(new Option(k.l,j)))}
+ put("pre");put("ch");applyPreset();put("tgQ");tgRender();
+ putAll();tgFill();putAll();setMode(d.mode==="D"?"D":"A");return true}
+document.addEventListener("input",stSave);document.addEventListener("click",e=>{if(e.target.closest(".tabs,.chips"))stSave()});
+$("stReset").onclick=()=>{try{localStorage.removeItem(SKEY)}catch(e){}location.reload()};
+if(!stLoad())setMode("A");
 </script></body></html>
